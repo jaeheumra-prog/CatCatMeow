@@ -27,6 +27,7 @@ var _last_input_direction: = Vector2.ZERO
 # shape.
 @onready var _player_collision: = $PlayerCollision as Area2D
 
+@export var dash_cells: int=3
 
 func _ready() -> void:
 	super._ready()

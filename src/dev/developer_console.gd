@@ -2,6 +2,7 @@ extends CanvasLayer
 
 const MAIN_SCENE_PATH := "res://src/main.tscn"
 const GRLAB_SCENE_PATH := "res://src/dev/dev_test_lab.tscn"
+const MINIGAME1_SCENE_PATH := "res://src/dev/minigames/fish_catch/fish_catch.tscn"
 
 var _is_open := false
 var _was_tree_paused := false
@@ -61,6 +62,9 @@ func go_to_lab() -> void:
 
 func go_to_main() -> void:
 	_request_scene_change(_return_scene_path if not _return_scene_path.is_empty() else MAIN_SCENE_PATH)
+	
+func go_to_minigame1() -> void:
+	_request_scene_change(MINIGAME1_SCENE_PATH)
 
 
 func _on_command_submitted(raw_command: String) -> void:
@@ -79,10 +83,16 @@ func _on_command_submitted(raw_command: String) -> void:
 			_write_system_message("기존 게임으로 돌아갑니다.")
 			go_to_main()
 		"HELP":
-			_write_system_message("GRLAB  테스트 공간 이동\nMAIN   기존 게임으로 복귀\nCLEAR  콘솔 기록 지우기")
+			_write_system_message("GRLAB  테스트 공간 이동해버리\nMAIN   기존 게임으로 복귀\nCLEAR  콘솔 기록 지우기 생선받기\nMiniGame1")
 		"CLEAR":
 			_history.clear()
+			
+		"MINIGAME1":
+			_write_system_message("미니 게임1을 실행을 할까말까 앙까라 메시")
+			go_to_minigame1()
 		_:
+			
+		
 			_write_system_message("알 수 없는 명령어: %s (HELP를 입력하세요.)" % command)
 
 	_command_input.grab_focus()
