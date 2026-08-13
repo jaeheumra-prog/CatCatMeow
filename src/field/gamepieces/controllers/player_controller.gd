@@ -27,11 +27,18 @@ var _last_input_direction: = Vector2.ZERO
 # shape.
 @onready var _player_collision: = $PlayerCollision as Area2D
 
-@export var dash_cells: int=3
+@export var dash_enabled: bool = true
+@export_range(1, 10, 1) var dash_cells: int = 3
+@export_range(1.0, 10.0, 0.1) var dash_speed_multiplier: float = 3.0
+
+var _is_dashing := false
+var _normal_move_speed := 0.0
 
 func _ready() -> void:
 	super._ready()
-	
+
+	_normal_move_speed = _gamepiece.move_speed
+
 	if not Engine.is_editor_hint():
 		add_to_group(GROUP)
 		
@@ -72,6 +79,11 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
+		if dash_enabled and event.is_action_pressed("dash"):
+			dash()
+			return
+
+	if event is InputEventKey:
 		if event.is_action_pressed("ui_up"):
 			_last_input_direction = Vector2.UP
 			if _gamepiece.is_moving():	stop_moving()
@@ -91,6 +103,41 @@ func _unhandled_input(event: InputEvent) -> void:
 			_last_input_direction = Vector2.RIGHT
 			if _gamepiece.is_moving():	stop_moving()
 			else:	move_to_pressed_key(Vector2.RIGHT)
+
+func dash() -> void:
+	if not is_active:
+		return
+
+	var dash_direction := _last_input_direction
+
+	if dash_direction == Vector2.ZERO:
+		dash_direction = Directions.MAPPINGS[_gamepiece.direction]
+
+	var source_cell := GamepieceRegistry.get_cell(_gamepiece)
+	var target_cell := source_cell
+	var dash_path: Array[Vector2i] = []
+
+	for _i in range(dash_cells):
+		var next_cell := target_cell + Vector2i(dash_direction)
+
+		var test_path := Gameboard.pathfinder.get_path_to_cell(
+			target_cell,
+			next_cell
+		)
+
+		# A dash must stay in a straight line. Stop before an invalid or occupied cell.
+		if test_path.size() != 1 or test_path[0] != next_cell:
+			break
+
+		dash_path.append(next_cell)
+		target_cell = next_cell
+
+	if dash_path.is_empty():
+		return
+
+	_is_dashing = true
+	_gamepiece.move_speed = _normal_move_speed * dash_speed_multiplier
+	move_path = dash_path.duplicate()
 
 
 func move_along_path(value: Array[Vector2i]) -> void:
@@ -191,13 +238,18 @@ func _on_gamepiece_arriving(excess_distance: float) -> void:
 		# It may be that the player is holding the keys down. In that case, continue moving the
 		# gamepiece towards the pressed direction.
 		var input_direction: = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-		if not input_direction.is_equal_approx(Vector2.ZERO):
+		if not _is_dashing and not input_direction.is_equal_approx(Vector2.ZERO):
 			move_to_pressed_key(_last_input_direction)
 
 
 func _on_gamepiece_arrived() -> void:
 	super._on_gamepiece_arrived()
-	
+
+	var finished_dash := _is_dashing
+	if _is_dashing:
+		_is_dashing = false
+		_gamepiece.move_speed = _normal_move_speed
+
 	_player_collision.position = Vector2.ZERO
 	_interaction_shape.disabled = false
 	
@@ -221,3 +273,7 @@ func _on_gamepiece_arrived() -> void:
 		var input_direction: = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 		if not input_direction.is_equal_approx(Vector2.ZERO):
 			_gamepiece.direction = Directions.vector_to_direction(_last_input_direction)
+
+			# Resume normal movement if the direction key stayed held through the dash.
+			if finished_dash:
+				move_to_pressed_key(_last_input_direction)

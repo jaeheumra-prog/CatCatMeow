@@ -53,73 +53,93 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-#func spawn_fish() -> void:
-	#print("SPAWN FISH")
-	#if fish_scene == null:
-		#push_error("Fish Catch: fish_scene이 설정되어 있지 않습니다.")
-		#return
-#
-	#var fish := fish_scene.instantiate() as LabFish
-#
-	#if fish == null:
-		#push_error("Fish Catch: fish_scene의 루트가 LabFish가 아닙니다.")
-		#return
 func spawn_fish() -> void:
 	print("SPAWN FISH")
-
 	if fish_scene == null:
-		push_error("Fish Catch: fish_scene이 null입니다.")
+		push_error("Fish Catch: fish_scene이 설정되어 있지 않습니다.")
 		return
-
+		
 	var fish_instance := fish_scene.instantiate()
-	print("instantiated: ", fish_instance)
-
+	
 	if fish_instance == null:
 		push_error("Fish Catch: instantiate 실패")
 		return
 
+
+	var fish_Instance := fish_scene.instantiate() 
+
 	if fish_instance is not LabFish:
-		push_error("Fish Catch: fish_scene 루트가 LabFish가 아닙니다.")
-		print("actual type: ", fish_instance.get_class())
+		push_error("Fish Catch: fish_scene의 루트가 LabFish가 아닙니다.")
+		fish_instance.queue_free()
 		return
-
+		
 	var fish := fish_instance as LabFish
-
-	fish.position = Vector2(960, 200)
-	fish.fall_speed = 180.0
-
-	fish.caught.connect(_on_fish_caught)
-	fish.missed.connect(_on_fish_missed)
-
-	fish_container.add_child(fish)
 	
-	print("fish visible = ", fish.visible)
-	print("fish global pos = ", fish.global_position)
-	print("container pos = ", fish_container.global_position)
-	print("container scale = ", fish_container.global_scale)
-	print("fish children = ", fish.get_children())
-
-	print("fish added: ", fish, " / pos=", fish.position)
-	print("child count: ", fish_container.get_child_count())
-
-	fish.name = "LabFish"
-
 	fish.position = Vector2(
 		_rng.randf_range(spawn_x_min, spawn_x_max),
-		-80.0
-	)
-
-	# 점수가 높아질수록 조금씩 빨라짐
-	fish.fall_speed = (
-		180.0
-		+ _rng.randf_range(0.0, 90.0)
-		+ score * 3.0
+		-40.0
 	)
 
 	fish.caught.connect(_on_fish_caught)
 	fish.missed.connect(_on_fish_missed)
 
 	fish_container.add_child(fish)
+#func spawn_fish() -> void:
+	#print("SPAWN FISH")
+#
+	#if fish_scene == null:
+		#push_error("Fish Catch: fish_scene이 null입니다.")
+		#return
+#
+	#var fish_instance := fish_scene.instantiate()
+	#print("instantiated: ", fish_instance)
+#
+	#if fish_instance == null:
+		#push_error("Fish Catch: instantiate 실패")
+		#return
+#
+	#if fish_instance is not LabFish:
+		#push_error("Fish Catch: fish_scene 루트가 LabFish가 아닙니다.")
+		#print("actual type: ", fish_instance.get_class())
+		#return
+#
+	#var fish := fish_instance as LabFish
+#
+	#fish.position = Vector2(960, 200)
+	#fish.fall_speed = 180.0
+#
+	#fish.caught.connect(_on_fish_caught)
+	#fish.missed.connect(_on_fish_missed)
+#
+	#fish_container.add_child(fish)
+	#
+	#print("fish visible = ", fish.visible)
+	#print("fish global pos = ", fish.global_position)
+	#print("container pos = ", fish_container.global_position)
+	#print("container scale = ", fish_container.global_scale)
+	#print("fish children = ", fish.get_children())
+#
+	#print("fish added: ", fish, " / pos=", fish.position)
+	#print("child count: ", fish_container.get_child_count())
+#
+	#fish.name = "LabFish"
+#
+	#fish.position = Vector2(
+		#_rng.randf_range(spawn_x_min, spawn_x_max),
+		#-80.0
+	#)
+#
+	## 점수가 높아질수록 조금씩 빨라짐
+	#fish.fall_speed = (
+		#180.0
+		#+ _rng.randf_range(0.0, 90.0)
+		#+ score * 3.0
+	#)
+#
+	#fish.caught.connect(_on_fish_caught)
+	#fish.missed.connect(_on_fish_missed)
+#
+	#fish_container.add_child(fish)
 
 
 func _on_fish_caught(fish: FishPiece) -> void:
@@ -162,7 +182,7 @@ func end_game() -> void:
 
 	game_over_label.show()
 
-	hint_label.text = "\\ 키로 콘솔 열기 · MAIN으로 돌아가기"
+	hint_label.text = ""
 
 
 func restart_game() -> void:

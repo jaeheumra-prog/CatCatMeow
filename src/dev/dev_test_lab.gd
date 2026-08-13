@@ -2,6 +2,7 @@ extends Node2D
 
 const MAP_DATA_PATH := "res://assets/maps/my_map_compact.json"
 const MAP_CELL_SIZE := 16.0
+const MAP_TILESET := preload("res://overworld/maps/tilesets/kenney_terrain.tres")
 const PLAYER_SCENE := preload("res://src/field/gamepieces/gamepiece.tscn")
 const PLAYER_CONTROLLER_SCENE := preload("res://src/field/gamepieces/controllers/player_controller.tscn")
 const PLAYER_ANIMATION_SCENE := preload("res://assets/characters/bbiyong/bbiyong_lab_gfx.tscn")
@@ -55,6 +56,7 @@ var _walkable_cells: Dictionary[Vector2i, bool] = {}
 var _hover_cell := Gameboard.INVALID_CELL
 var _lab_properties: GameboardProperties
 var _player: Gamepiece
+var _map_render_root: Node2D
 
 @onready var _test_objects: Node2D = $TestObjects
 @onready var _camera: Camera2D = $Camera2D
@@ -64,6 +66,7 @@ var _player: Gamepiece
 func _ready() -> void:
 	_map_data = _load_map_data()
 	_setup_map_transform()
+	_create_map_renderer()
 	_setup_gameboard()
 	_create_preview_objects()
 	_spawn_player()
@@ -86,52 +89,115 @@ func _draw() -> void:
 	if _map_data.is_empty():
 		return
 
-	var cell_size := MAP_CELL_SIZE
 	var map_rect := Rect2(_map_origin, _map_pixel_size)
 	draw_rect(map_rect.grow(18), Color("07111d"), true)
-
-	for run in _parse_runs(_map_data.get("ground_runs", "")):
-		var rect := Rect2(
-			_map_origin + Vector2(run[1], run[0]) * cell_size,
-			Vector2(run[2], 1) * cell_size
-		)
-		draw_rect(rect, _ground_color(run[3]), true)
-
-	for run in _parse_runs(_map_data.get("pool_runs", "")):
-		var rect := Rect2(
-			_map_origin + Vector2(run[1], run[0]) * cell_size,
-			Vector2(run[2], 1) * cell_size
-		)
-		draw_rect(rect, _packed_color(_map_data.colors.water), true)
-
-	for run in _parse_runs(_map_data.get("object_runs", "")):
-		var rect := Rect2(
-			_map_origin + Vector2(run[1], run[0]) * cell_size,
-			Vector2(run[2], 1) * cell_size
-		)
-		if run[3] == 5:
-			draw_rect(rect, _packed_color(_map_data.colors.tree).darkened(0.2), true)
-		else:
-			draw_rect(rect, _packed_color(_map_data.colors.fence).darkened(0.15), true)
-
-	for collision_value in String(_map_data.get("collisions", "")).split(",", false):
-		var index := collision_value.to_int()
-		var x := index % int(_map_data.width)
-		var y := index / int(_map_data.width)
-		var rect := Rect2(
-			_map_origin + Vector2(x, y) * cell_size,
-			Vector2.ONE * cell_size
-		)
-		draw_rect(rect, Color("ff5d73"), true)
-
 	draw_rect(map_rect, Color("9ccfd8"), false, 3.0)
 	if _hover_cell != Gameboard.INVALID_CELL:
 		var hover_rect := Rect2(
-			_map_origin + Vector2(_hover_cell) * cell_size,
-			Vector2.ONE * cell_size
+			_map_origin + Vector2(_hover_cell) * MAP_CELL_SIZE,
+			Vector2.ONE * MAP_CELL_SIZE
 		)
 		draw_rect(hover_rect, Color(0.96, 0.76, 0.47, 0.32), true)
 		draw_rect(hover_rect, Color("f6c177"), false, 1.0)
+
+
+func _create_map_renderer() -> void:
+	if _map_data.is_empty():
+		return
+
+	_map_render_root = Node2D.new()
+	_map_render_root.name = "MapRenderer"
+	_map_render_root.position = _map_origin
+	_map_render_root.z_index = 0
+	add_child(_map_render_root)
+	move_child(_map_render_root, 0)
+
+	var ground_layer := _new_tile_layer("Ground", MAP_TILESET, 0)
+	var cobblestone_cells: Array[Vector2i] = []
+	var dirt_cells: Array[Vector2i] = []
+	var grass_cells: Array[Vector2i] = []
+	for run in _parse_runs(_map_data.get("ground_runs", "")):
+		var cells := _cells_from_run(run)
+		match run[3]:
+			0:
+				cobblestone_cells.append_array(cells)
+			7:
+				dirt_cells.append_array(cells)
+			_:
+				grass_cells.append_array(cells)
+
+	# The project terrain set provides connected dirt, grass and cobblestone borders.
+	ground_layer.set_cells_terrain_connect(dirt_cells, 1, 0)
+	ground_layer.set_cells_terrain_connect(grass_cells, 1, 1)
+	ground_layer.set_cells_terrain_connect(cobblestone_cells, 1, 2)
+
+	var water_layer := _new_tile_layer("Water", _create_water_tileset(), 1)
+	for cell in _cells_from_runs(_map_data.get("pool_runs", "")):
+		var variant := posmod(cell.x * 17 + cell.y * 31, 3)
+		water_layer.set_cell(cell, 0, Vector2i(variant, 0))
+
+	var object_layer := _new_tile_layer("Objects", MAP_TILESET, 2)
+	var tree_cells: Array[Vector2i] = []
+	var fence_cells: Array[Vector2i] = []
+	for run in _parse_runs(_map_data.get("object_runs", "")):
+		if run[3] == 5:
+			tree_cells.append_array(_cells_from_run(run))
+		else:
+			fence_cells.append_array(_cells_from_run(run))
+
+	object_layer.set_cells_terrain_connect(tree_cells, 0, 0)
+	for cell in fence_cells:
+		object_layer.set_cell(cell, 0, _fence_atlas_coord(cell, fence_cells))
+
+
+func _new_tile_layer(layer_name: String, tile_set_resource: TileSet, layer_z_index: int) -> TileMapLayer:
+	var layer := TileMapLayer.new()
+	layer.name = layer_name
+	layer.tile_set = tile_set_resource
+	layer.z_index = layer_z_index
+	layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_map_render_root.add_child(layer)
+	return layer
+
+
+func _create_water_tileset() -> TileSet:
+	var image := Image.create(48, 16, false, Image.FORMAT_RGBA8)
+	var water := _packed_color(_map_data.colors.water)
+	var deep_water := water.darkened(0.18)
+	var foam := water.lightened(0.24)
+
+	for variant in range(3):
+		for y in range(16):
+			for x in range(16):
+				var color := water if (x + y + variant) % 4 else deep_water
+				if (y + variant * 3) % 8 == 2 and posmod(x + variant * 5, 7) < 3:
+					color = foam
+				image.set_pixel(variant * 16 + x, y, color)
+
+	var texture := ImageTexture.create_from_image(image)
+	var atlas := TileSetAtlasSource.new()
+	atlas.texture = texture
+	atlas.texture_region_size = Vector2i(16, 16)
+	for variant in range(3):
+		atlas.create_tile(Vector2i(variant, 0))
+
+	var tile_set := TileSet.new()
+	tile_set.tile_size = Vector2i(16, 16)
+	tile_set.add_source(atlas, 0)
+	return tile_set
+
+
+func _fence_atlas_coord(cell: Vector2i, fence_cells: Array[Vector2i]) -> Vector2i:
+	var has_left := fence_cells.has(cell + Vector2i.LEFT)
+	var has_right := fence_cells.has(cell + Vector2i.RIGHT)
+	var has_up := fence_cells.has(cell + Vector2i.UP)
+	var has_down := fence_cells.has(cell + Vector2i.DOWN)
+
+	if (has_left or has_right) and not (has_up or has_down):
+		return Vector2i(9, 5)
+	if (has_up or has_down) and not (has_left or has_right):
+		return Vector2i(10, 4)
+	return Vector2i(10, 5)
 
 
 func _load_map_data() -> Dictionary:
@@ -203,8 +269,14 @@ func _setup_gameboard() -> void:
 func _cells_from_runs(value: String) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	for run in _parse_runs(value):
-		for x in range(run[1], run[1] + run[2]):
-			cells.append(Vector2i(x, run[0]))
+		cells.append_array(_cells_from_run(run))
+	return cells
+
+
+func _cells_from_run(run: PackedInt32Array) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for x in range(run[1], run[1] + run[2]):
+		cells.append(Vector2i(x, run[0]))
 	return cells
 
 
@@ -347,18 +419,6 @@ func _make_sprite(texture_path: String, region := Rect2()) -> Sprite2D:
 
 func _preview_position(start: Vector2, spacing: Vector2, columns: int, index: int) -> Vector2:
 	return start + Vector2(index % columns, index / columns) * spacing
-
-
-func _ground_color(type: int) -> Color:
-	match type:
-		0:
-			return _packed_color(_map_data.colors.cobblestone).darkened(0.42)
-		7:
-			return _packed_color(_map_data.colors.sand).darkened(0.22)
-		10:
-			return _packed_color(_map_data.colors.large_tile).darkened(0.38)
-		_:
-			return _packed_color(_map_data.colors.background)
 
 
 func _packed_color(value) -> Color:
