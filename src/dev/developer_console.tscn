@@ -1,0 +1,70 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/dev/developer_console.gd" id="1_console"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_console"]
+bg_color = Color(0.0431373, 0.054902, 0.0901961, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.619608, 0.811765, 0.847059, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="DeveloperConsole" type="CanvasLayer"]
+layer = 120
+process_mode = 3
+script = ExtResource("1_console")
+
+[node name="ConsolePanel" type="PanelContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -760.0
+offset_top = -330.0
+offset_right = -32.0
+offset_bottom = -32.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBox_console")
+
+[node name="Margin" type="MarginContainer" parent="ConsolePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="Content" type="VBoxContainer" parent="ConsolePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="Label" parent="ConsolePanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.964706, 0.756863, 0.466667, 1)
+theme_override_font_sizes/font_size = 24
+text = "DEV CHAT  /  \\ 키 또는 ESC로 닫기"
+
+[node name="History" type="RichTextLabel" parent="ConsolePanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 190)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.870588, 0.882353, 0.941176, 1)
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+scroll_following = true
+selection_enabled = true
+
+[node name="CommandInput" type="LineEdit" parent="ConsolePanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+placeholder_text = "명령어 입력 후 Enter (예: GRLAB)"
+clear_button_enabled = true

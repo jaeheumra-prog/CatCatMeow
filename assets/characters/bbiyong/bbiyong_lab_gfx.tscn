@@ -1,0 +1,127 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://assets/characters/bbiyong/bbiyong_lab_animation.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/characters/bbiyong/bbiyong_lab_sheet.png" id="2_texture"]
+
+[sub_resource type="AtlasTexture" id="Atlas_s0"]
+atlas = ExtResource("2_texture")
+region = Rect2(0, 0, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_s1"]
+atlas = ExtResource("2_texture")
+region = Rect2(320, 0, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_s2"]
+atlas = ExtResource("2_texture")
+region = Rect2(640, 0, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_s3"]
+atlas = ExtResource("2_texture")
+region = Rect2(960, 0, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_w0"]
+atlas = ExtResource("2_texture")
+region = Rect2(0, 330, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_w1"]
+atlas = ExtResource("2_texture")
+region = Rect2(320, 330, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_w2"]
+atlas = ExtResource("2_texture")
+region = Rect2(640, 330, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_w3"]
+atlas = ExtResource("2_texture")
+region = Rect2(960, 330, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_n0"]
+atlas = ExtResource("2_texture")
+region = Rect2(0, 660, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_n1"]
+atlas = ExtResource("2_texture")
+region = Rect2(320, 660, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_n2"]
+atlas = ExtResource("2_texture")
+region = Rect2(640, 660, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_n3"]
+atlas = ExtResource("2_texture")
+region = Rect2(960, 660, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_e0"]
+atlas = ExtResource("2_texture")
+region = Rect2(0, 990, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_e1"]
+atlas = ExtResource("2_texture")
+region = Rect2(320, 990, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_e2"]
+atlas = ExtResource("2_texture")
+region = Rect2(640, 990, 320, 330)
+
+[sub_resource type="AtlasTexture" id="Atlas_e3"]
+atlas = ExtResource("2_texture")
+region = Rect2(960, 990, 320, 330)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_cat"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_e0")}],
+"loop": true,
+"name": &"idle_e",
+"speed": 1.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_n0")}],
+"loop": true,
+"name": &"idle_n",
+"speed": 1.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_s0")}],
+"loop": true,
+"name": &"idle_s",
+"speed": 1.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_w0")}],
+"loop": true,
+"name": &"idle_w",
+"speed": 1.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_e0")}, {"duration": 1.0, "texture": SubResource("Atlas_e1")}, {"duration": 1.0, "texture": SubResource("Atlas_e2")}, {"duration": 1.0, "texture": SubResource("Atlas_e3")}],
+"loop": true,
+"name": &"run_e",
+"speed": 6.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_n0")}, {"duration": 1.0, "texture": SubResource("Atlas_n1")}, {"duration": 1.0, "texture": SubResource("Atlas_n2")}, {"duration": 1.0, "texture": SubResource("Atlas_n3")}],
+"loop": true,
+"name": &"run_n",
+"speed": 6.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_s0")}, {"duration": 1.0, "texture": SubResource("Atlas_s1")}, {"duration": 1.0, "texture": SubResource("Atlas_s2")}, {"duration": 1.0, "texture": SubResource("Atlas_s3")}],
+"loop": true,
+"name": &"run_s",
+"speed": 6.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("Atlas_w0")}, {"duration": 1.0, "texture": SubResource("Atlas_w1")}, {"duration": 1.0, "texture": SubResource("Atlas_w2")}, {"duration": 1.0, "texture": SubResource("Atlas_w3")}],
+"loop": true,
+"name": &"run_w",
+"speed": 6.0
+}]
+
+[node name="BbiyongLabGFX" type="Marker2D"]
+script = ExtResource("1_script")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Anchor" type="Marker2D" parent="."]
+
+[node name="Sprite" type="AnimatedSprite2D" parent="Anchor"]
+texture_filter = 1
+position = Vector2(0, -165)
+sprite_frames = SubResource("SpriteFrames_cat")
+animation = &"idle_s"
+autoplay = "idle_s"
+
+[node name="Shadow" type="Sprite2D" parent="Anchor"]

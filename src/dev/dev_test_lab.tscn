@@ -1,0 +1,87 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/dev/dev_test_lab.gd" id="1_lab"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_header"]
+bg_color = Color(0.0431373, 0.054902, 0.0901961, 0.94)
+border_width_bottom = 3
+border_color = Color(0.619608, 0.811765, 0.847059, 1)
+
+[node name="DevTestLab" type="Node2D"]
+script = ExtResource("1_lab")
+
+[node name="TestObjects" type="Node2D" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Header" type="PanelContainer" parent="UI"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 126.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBox_header")
+
+[node name="Margin" type="MarginContainer" parent="UI/Header"]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 18
+
+[node name="Row" type="HBoxContainer" parent="UI/Header/Margin"]
+layout_mode = 2
+
+[node name="TitleBlock" type="VBoxContainer" parent="UI/Header/Margin/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="UI/Header/Margin/Row/TitleBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.964706, 0.756863, 0.466667, 1)
+theme_override_font_sizes/font_size = 32
+text = "GRLAB  개발자 테스트 공간"
+
+[node name="Guide" type="Label" parent="UI/Header/Margin/Row/TitleBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.776471, 0.8, 0.886275, 1)
+theme_override_font_sizes/font_size = 20
+text = "WASD/방향키 또는 지도 클릭: 캐릭터 이동 · 카메라 자동 추적 · \\ 콘솔"
+
+[node name="ReturnButton" type="Button" parent="UI/Header/Margin/Row"]
+custom_minimum_size = Vector2(230, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "기존 게임으로 돌아가기"
+
+[node name="Footer" type="Label" parent="UI"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -76.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.619608, 0.811765, 0.847059, 1)
+theme_override_font_sizes/font_size = 20
+text = "MyMap.json"
+horizontal_alignment = 1
+
+[node name="MapInfo" type="Label" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 132.0
+offset_bottom = 174.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.776471, 0.8, 0.886275, 1)
+theme_override_font_sizes/font_size = 18
+text = "Loading map..."
+horizontal_alignment = 1
+
+[connection signal="pressed" from="UI/Header/Margin/Row/ReturnButton" to="." method="_on_return_pressed"]
