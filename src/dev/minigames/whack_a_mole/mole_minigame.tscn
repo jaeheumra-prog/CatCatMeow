@@ -1,0 +1,175 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/dev/minigames/whack_a_mole/mole_minigame.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://src/dev/minigames/whack_a_mole/lab_mole.tscn" id="2_mole"]
+[ext_resource type="Script" path="res://src/dev/minigames/whack_a_mole/hammer.gd" id="3_hammer"]
+
+[node name="MoleMiniGame" type="Node2D"]
+script = ExtResource("1_main")
+mole_scene = ExtResource("2_mole")
+spawn_interval = 0.9
+game_duration = 30.0
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -10
+
+[node name="ColorRect" type="ColorRect" parent="Background"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.22, 0.39, 0.18, 1)
+
+[node name="Ground" type="ColorRect" parent="Background"]
+offset_top = 160.0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0.31, 0.47, 0.2, 1)
+
+[node name="HoleContainer" type="Node2D" parent="."]
+
+[node name="Hole_0_0" type="Marker2D" parent="HoleContainer"]
+position = Vector2(500, 350)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_0_0"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_0_1" type="Marker2D" parent="HoleContainer"]
+position = Vector2(960, 350)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_0_1"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_0_2" type="Marker2D" parent="HoleContainer"]
+position = Vector2(1420, 350)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_0_2"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_1_0" type="Marker2D" parent="HoleContainer"]
+position = Vector2(500, 580)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_1_0"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_1_1" type="Marker2D" parent="HoleContainer"]
+position = Vector2(960, 580)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_1_1"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_1_2" type="Marker2D" parent="HoleContainer"]
+position = Vector2(1420, 580)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_1_2"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_2_0" type="Marker2D" parent="HoleContainer"]
+position = Vector2(500, 810)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_2_0"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_2_1" type="Marker2D" parent="HoleContainer"]
+position = Vector2(960, 810)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_2_1"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="Hole_2_2" type="Marker2D" parent="HoleContainer"]
+position = Vector2(1420, 810)
+[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_2_2"]
+polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
+color = Color(0.12, 0.075, 0.045, 1)
+
+[node name="MoleContainer" type="Node2D" parent="."]
+
+[node name="Hammer" type="Sprite2D" parent="."]
+z_index = 100
+script = ExtResource("3_hammer")
+
+[node name="Head" type="Polygon2D" parent="Hammer"]
+position = Vector2(-12, -24)
+rotation = -0.42
+polygon = PackedVector2Array(-38, -22, 38, -22, 38, 22, -38, 22)
+color = Color(0.78, 0.81, 0.84, 1)
+
+[node name="Handle" type="Polygon2D" parent="Hammer"]
+position = Vector2(18, 28)
+rotation = -0.42
+polygon = PackedVector2Array(-7, -55, 7, -55, 7, 55, -7, 55)
+color = Color(0.42, 0.24, 0.1, 1)
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="TopBar" type="ColorRect" parent="UI"]
+offset_right = 1920.0
+offset_bottom = 90.0
+mouse_filter = 2
+color = Color(0.02, 0.025, 0.04, 0.85)
+
+[node name="ScoreLabel" type="Label" parent="UI"]
+offset_left = 40.0
+offset_top = 20.0
+offset_right = 400.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 32
+text = "SCORE : 0"
+
+[node name="TimeLabel" type="Label" parent="UI"]
+offset_left = 1500.0
+offset_top = 20.0
+offset_right = 1880.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 32
+text = "TIME : 30"
+horizontal_alignment = 2
+
+[node name="TitleLabel" type="Label" parent="UI"]
+offset_left = 660.0
+offset_top = 18.0
+offset_right = 1260.0
+offset_bottom = 75.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 36
+text = "두더지 잡기"
+horizontal_alignment = 1
+
+[node name="HintLabel" type="Label" parent="UI"]
+offset_left = 560.0
+offset_top = 1010.0
+offset_right = 1360.0
+offset_bottom = 1060.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 22
+text = "마우스 클릭으로 두더지를 때리세요!"
+horizontal_alignment = 1
+
+[node name="GameOverLabel" type="Label" parent="UI"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -180.0
+offset_right = 350.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.62, 1)
+theme_override_font_sizes/font_size = 42
+text = "TIME UP!"
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -39,7 +39,6 @@ color = Color(0.09, 0.14, 0.12, 1)
 position = Vector2(960, 950)
 collision_mask = 2
 script = ExtResource("3_player")
-right_limit = 1760.0
 move_speed = 600.0
 
 [node name="BbiyongLabGFX" parent="LabPlayer" unique_id=1803553378 instance=ExtResource("4_bbiyong")]

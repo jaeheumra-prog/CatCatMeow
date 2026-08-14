@@ -2,7 +2,6 @@ extends Node2D
 
 const MAP_DATA_PATH := "res://assets/maps/my_map_compact.json"
 const MAP_CELL_SIZE := 16.0
-const MAP_TILESET := preload("res://overworld/maps/tilesets/kenney_terrain.tres")
 const PLAYER_SCENE := preload("res://src/field/gamepieces/gamepiece.tscn")
 const PLAYER_CONTROLLER_SCENE := preload("res://src/field/gamepieces/controllers/player_controller.tscn")
 const PLAYER_ANIMATION_SCENE := preload("res://assets/characters/bbiyong/bbiyong_lab_gfx.tscn")
@@ -105,6 +104,42 @@ func _create_map_renderer() -> void:
 	if _map_data.is_empty():
 		return
 
+	var image_size := Vector2i(int(_map_pixel_size.x), int(_map_pixel_size.y))
+	var map_image := Image.create(image_size.x, image_size.y, false, Image.FORMAT_RGBA8)
+	map_image.fill(_packed_color(_map_data.colors.background).darkened(0.46))
+
+	var ground_cells: Dictionary[Vector2i, int] = {}
+	for run in _parse_runs(_map_data.get("ground_runs", "")):
+		for cell in _cells_from_run(run):
+			ground_cells[cell] = run[3]
+
+	for cell in ground_cells:
+		_paint_ground_cell(map_image, cell, ground_cells[cell])
+	_paint_region_edges(map_image, ground_cells, Color("17131d"), 2)
+
+	var water_cells: Dictionary[Vector2i, bool] = {}
+	for cell in _cells_from_runs(_map_data.get("pool_runs", "")):
+		water_cells[cell] = true
+		_paint_water_cell(map_image, cell)
+	_paint_region_edges(map_image, water_cells, _packed_color(_map_data.colors.water).darkened(0.4), 2)
+
+	var tree_cells: Dictionary[Vector2i, bool] = {}
+	var fence_cells: Dictionary[Vector2i, bool] = {}
+	for run in _parse_runs(_map_data.get("object_runs", "")):
+		if run[3] == 5:
+			for cell in _cells_from_run(run):
+				tree_cells[cell] = true
+		else:
+			for cell in _cells_from_run(run):
+				fence_cells[cell] = true
+
+	for cell in tree_cells:
+		_paint_tree_cell(map_image, cell)
+	_paint_region_edges(map_image, tree_cells, Color("172218"), 2)
+
+	for cell in fence_cells:
+		_paint_fence_cell(map_image, cell, fence_cells)
+
 	_map_render_root = Node2D.new()
 	_map_render_root.name = "MapRenderer"
 	_map_render_root.position = _map_origin
@@ -112,92 +147,83 @@ func _create_map_renderer() -> void:
 	add_child(_map_render_root)
 	move_child(_map_render_root, 0)
 
-	var ground_layer := _new_tile_layer("Ground", MAP_TILESET, 0)
-	var cobblestone_cells: Array[Vector2i] = []
-	var dirt_cells: Array[Vector2i] = []
-	var grass_cells: Array[Vector2i] = []
-	for run in _parse_runs(_map_data.get("ground_runs", "")):
-		var cells := _cells_from_run(run)
-		match run[3]:
-			0:
-				cobblestone_cells.append_array(cells)
-			7:
-				dirt_cells.append_array(cells)
-			_:
-				grass_cells.append_array(cells)
-
-	# The project terrain set provides connected dirt, grass and cobblestone borders.
-	ground_layer.set_cells_terrain_connect(dirt_cells, 1, 0)
-	ground_layer.set_cells_terrain_connect(grass_cells, 1, 1)
-	ground_layer.set_cells_terrain_connect(cobblestone_cells, 1, 2)
-
-	var water_layer := _new_tile_layer("Water", _create_water_tileset(), 1)
-	for cell in _cells_from_runs(_map_data.get("pool_runs", "")):
-		var variant := posmod(cell.x * 17 + cell.y * 31, 3)
-		water_layer.set_cell(cell, 0, Vector2i(variant, 0))
-
-	var object_layer := _new_tile_layer("Objects", MAP_TILESET, 2)
-	var tree_cells: Array[Vector2i] = []
-	var fence_cells: Array[Vector2i] = []
-	for run in _parse_runs(_map_data.get("object_runs", "")):
-		if run[3] == 5:
-			tree_cells.append_array(_cells_from_run(run))
-		else:
-			fence_cells.append_array(_cells_from_run(run))
-
-	object_layer.set_cells_terrain_connect(tree_cells, 0, 0)
-	for cell in fence_cells:
-		object_layer.set_cell(cell, 0, _fence_atlas_coord(cell, fence_cells))
+	var map_sprite := Sprite2D.new()
+	map_sprite.name = "MapTexture"
+	map_sprite.centered = false
+	map_sprite.texture = ImageTexture.create_from_image(map_image)
+	map_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_map_render_root.add_child(map_sprite)
 
 
-func _new_tile_layer(layer_name: String, tile_set_resource: TileSet, layer_z_index: int) -> TileMapLayer:
-	var layer := TileMapLayer.new()
-	layer.name = layer_name
-	layer.tile_set = tile_set_resource
-	layer.z_index = layer_z_index
-	layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_map_render_root.add_child(layer)
-	return layer
+func _paint_ground_cell(image: Image, cell: Vector2i, ground_type: int) -> void:
+	var rect := _cell_rect(cell)
+	var color := _ground_color(ground_type)
+	image.fill_rect(rect, color)
+
+	var detail := color.lightened(0.08)
+	var seed := posmod(cell.x * 37 + cell.y * 71 + ground_type * 13, 11)
+	if ground_type == 10:
+		image.fill_rect(Rect2i(rect.position + Vector2i(1, 1), Vector2i(14, 1)), color.darkened(0.08))
+		image.fill_rect(Rect2i(rect.position + Vector2i(1, 8), Vector2i(14, 1)), color.darkened(0.06))
+	elif ground_type == 7:
+		image.fill_rect(Rect2i(rect.position + Vector2i(3 + seed % 7, 4), Vector2i(2, 1)), detail)
+		image.fill_rect(Rect2i(rect.position + Vector2i(9, 11 - seed % 4), Vector2i(1, 1)), detail)
+	else:
+		image.fill_rect(Rect2i(rect.position + Vector2i(2 + seed % 8, 3), Vector2i(3, 1)), detail)
+		image.fill_rect(Rect2i(rect.position + Vector2i(7, 10 + seed % 3), Vector2i(2, 1)), color.darkened(0.08))
 
 
-func _create_water_tileset() -> TileSet:
-	var image := Image.create(48, 16, false, Image.FORMAT_RGBA8)
+func _paint_water_cell(image: Image, cell: Vector2i) -> void:
+	var rect := _cell_rect(cell)
 	var water := _packed_color(_map_data.colors.water)
-	var deep_water := water.darkened(0.18)
-	var foam := water.lightened(0.24)
-
-	for variant in range(3):
-		for y in range(16):
-			for x in range(16):
-				var color := water if (x + y + variant) % 4 else deep_water
-				if (y + variant * 3) % 8 == 2 and posmod(x + variant * 5, 7) < 3:
-					color = foam
-				image.set_pixel(variant * 16 + x, y, color)
-
-	var texture := ImageTexture.create_from_image(image)
-	var atlas := TileSetAtlasSource.new()
-	atlas.texture = texture
-	atlas.texture_region_size = Vector2i(16, 16)
-	for variant in range(3):
-		atlas.create_tile(Vector2i(variant, 0))
-
-	var tile_set := TileSet.new()
-	tile_set.tile_size = Vector2i(16, 16)
-	tile_set.add_source(atlas, 0)
-	return tile_set
+	image.fill_rect(rect, water)
+	var wave_y := 3 + posmod(cell.x * 3 + cell.y * 5, 8)
+	image.fill_rect(Rect2i(rect.position + Vector2i(2, wave_y), Vector2i(6, 1)), water.lightened(0.22))
+	image.fill_rect(Rect2i(rect.position + Vector2i(10, posmod(wave_y + 6, 14)), Vector2i(3, 1)), water.darkened(0.14))
 
 
-func _fence_atlas_coord(cell: Vector2i, fence_cells: Array[Vector2i]) -> Vector2i:
-	var has_left := fence_cells.has(cell + Vector2i.LEFT)
-	var has_right := fence_cells.has(cell + Vector2i.RIGHT)
-	var has_up := fence_cells.has(cell + Vector2i.UP)
-	var has_down := fence_cells.has(cell + Vector2i.DOWN)
+func _paint_tree_cell(image: Image, cell: Vector2i) -> void:
+	var rect := _cell_rect(cell)
+	var tree := _packed_color(_map_data.colors.tree)
+	image.fill_rect(rect, tree.darkened(0.18))
+	image.fill_rect(Rect2i(rect.position + Vector2i(2, 1), Vector2i(12, 12)), tree)
+	image.fill_rect(Rect2i(rect.position + Vector2i(5, 3), Vector2i(5, 5)), tree.lightened(0.16))
+	image.fill_rect(Rect2i(rect.position + Vector2i(7, 12), Vector2i(3, 4)), Color("694d31"))
 
-	if (has_left or has_right) and not (has_up or has_down):
-		return Vector2i(9, 5)
-	if (has_up or has_down) and not (has_left or has_right):
-		return Vector2i(10, 4)
-	return Vector2i(10, 5)
+
+func _paint_fence_cell(image: Image, cell: Vector2i, fence_cells: Dictionary[Vector2i, bool]) -> void:
+	var origin := cell * int(MAP_CELL_SIZE)
+	var fence := _packed_color(_map_data.colors.fence)
+	var outline := fence.darkened(0.42)
+	var has_horizontal := fence_cells.has(cell + Vector2i.LEFT) or fence_cells.has(cell + Vector2i.RIGHT)
+	var has_vertical := fence_cells.has(cell + Vector2i.UP) or fence_cells.has(cell + Vector2i.DOWN)
+
+	if has_horizontal or not has_vertical:
+		image.fill_rect(Rect2i(origin + Vector2i(0, 6), Vector2i(16, 5)), outline)
+		image.fill_rect(Rect2i(origin + Vector2i(0, 7), Vector2i(16, 3)), fence)
+	if has_vertical or not has_horizontal:
+		image.fill_rect(Rect2i(origin + Vector2i(6, 0), Vector2i(5, 16)), outline)
+		image.fill_rect(Rect2i(origin + Vector2i(7, 0), Vector2i(3, 16)), fence)
+	image.fill_rect(Rect2i(origin + Vector2i(5, 5), Vector2i(7, 7)), outline)
+	image.fill_rect(Rect2i(origin + Vector2i(7, 6), Vector2i(3, 6)), fence.lightened(0.08))
+
+
+func _paint_region_edges(image: Image, cells: Dictionary, edge_color: Color, thickness: int) -> void:
+	var cell_size := int(MAP_CELL_SIZE)
+	for cell: Vector2i in cells:
+		var origin := cell * cell_size
+		if not cells.has(cell + Vector2i.UP):
+			image.fill_rect(Rect2i(origin, Vector2i(cell_size, thickness)), edge_color)
+		if not cells.has(cell + Vector2i.DOWN):
+			image.fill_rect(Rect2i(origin + Vector2i(0, cell_size - thickness), Vector2i(cell_size, thickness)), edge_color)
+		if not cells.has(cell + Vector2i.LEFT):
+			image.fill_rect(Rect2i(origin, Vector2i(thickness, cell_size)), edge_color)
+		if not cells.has(cell + Vector2i.RIGHT):
+			image.fill_rect(Rect2i(origin + Vector2i(cell_size - thickness, 0), Vector2i(thickness, cell_size)), edge_color)
+
+
+func _cell_rect(cell: Vector2i) -> Rect2i:
+	return Rect2i(cell * int(MAP_CELL_SIZE), Vector2i.ONE * int(MAP_CELL_SIZE))
 
 
 func _load_map_data() -> Dictionary:
@@ -419,6 +445,18 @@ func _make_sprite(texture_path: String, region := Rect2()) -> Sprite2D:
 
 func _preview_position(start: Vector2, spacing: Vector2, columns: int, index: int) -> Vector2:
 	return start + Vector2(index % columns, index / columns) * spacing
+
+
+func _ground_color(ground_type: int) -> Color:
+	match ground_type:
+		0:
+			return _packed_color(_map_data.colors.cobblestone).darkened(0.12)
+		7:
+			return _packed_color(_map_data.colors.sand).darkened(0.08)
+		10:
+			return _packed_color(_map_data.colors.large_tile).darkened(0.1)
+		_:
+			return _packed_color(_map_data.colors.background)
 
 
 func _packed_color(value) -> Color:
