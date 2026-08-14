@@ -5,7 +5,14 @@ extends Node2D
 @export var spawn_interval: float = 0.9
 @export var game_duration: float = 30.0
 
+@export_category("이미지 슬롯")
+@export var background_image: Texture2D
+@export var hole_image: Texture2D
+@export var hole_image_scale := Vector2.ONE
+
 @onready var _camera: Camera2D = $Camera2D
+@onready var _background_image: TextureRect = $Background/BackgroundImage
+@onready var _background_fallback: ColorRect = $Background/BackgroundFallback
 @onready var holes: Node2D = $HoleContainer
 @onready var mole_container: Node2D = $MoleContainer
 @onready var hammer: MoleHammer = $Hammer
@@ -25,12 +32,33 @@ func _ready() -> void:
 	# FieldCamera와 분리된 미니게임 전용 카메라를 사용한다.
 	_camera.make_current()
 	time_left = game_duration
+	_configure_image_slots()
 
 	for hole in holes.get_children():
 		occupied[hole] = false
 
 	game_over_label.hide()
 	update_ui()
+
+
+func _configure_image_slots() -> void:
+	_background_image.texture = background_image
+	_background_image.visible = background_image != null
+	_background_fallback.visible = background_image == null
+
+	for child in holes.get_children():
+		var hole := child as Marker2D
+		if hole == null:
+			continue
+
+		var image := hole.get_node_or_null("Image") as Sprite2D
+		var fallback := hole.get_node_or_null("Fallback") as Polygon2D
+		if image != null:
+			image.texture = hole_image
+			image.scale = hole_image_scale
+			image.visible = hole_image != null
+		if fallback != null:
+			fallback.visible = hole_image == null
 
 
 func _process(delta: float) -> void:

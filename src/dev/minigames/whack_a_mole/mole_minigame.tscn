@@ -16,77 +16,99 @@ position = Vector2(960, 540)
 [node name="Background" type="CanvasLayer" parent="."]
 layer = -10
 
-[node name="ColorRect" type="ColorRect" parent="Background"]
+[node name="BackgroundFallback" type="ColorRect" parent="Background"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.22, 0.39, 0.18, 1)
+color = Color(0.38, 0.015, 0.015, 1)
 
-[node name="Ground" type="ColorRect" parent="Background"]
-offset_top = 160.0
-offset_right = 1920.0
-offset_bottom = 1080.0
+[node name="BackgroundImage" type="TextureRect" parent="Background"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-color = Color(0.31, 0.47, 0.2, 1)
+expand_mode = 1
+stretch_mode = 6
 
 [node name="HoleContainer" type="Node2D" parent="."]
 
 [node name="Hole_0_0" type="Marker2D" parent="HoleContainer"]
 position = Vector2(500, 350)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_0_0"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_0_0"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_0_0"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_0_1" type="Marker2D" parent="HoleContainer"]
 position = Vector2(960, 350)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_0_1"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_0_1"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_0_1"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_0_2" type="Marker2D" parent="HoleContainer"]
 position = Vector2(1420, 350)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_0_2"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_0_2"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_0_2"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_1_0" type="Marker2D" parent="HoleContainer"]
 position = Vector2(500, 580)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_1_0"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_1_0"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_1_0"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_1_1" type="Marker2D" parent="HoleContainer"]
 position = Vector2(960, 580)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_1_1"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_1_1"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_1_1"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_1_2" type="Marker2D" parent="HoleContainer"]
 position = Vector2(1420, 580)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_1_2"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_1_2"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_1_2"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_2_0" type="Marker2D" parent="HoleContainer"]
 position = Vector2(500, 810)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_2_0"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_2_0"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_2_0"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_2_1" type="Marker2D" parent="HoleContainer"]
 position = Vector2(960, 810)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_2_1"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_2_1"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_2_1"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="Hole_2_2" type="Marker2D" parent="HoleContainer"]
 position = Vector2(1420, 810)
-[node name="Visual" type="Polygon2D" parent="HoleContainer/Hole_2_2"]
-polygon = PackedVector2Array(-78, 0, -60, -25, 0, -35, 60, -25, 78, 0, 60, 25, 0, 35, -60, 25)
-color = Color(0.12, 0.075, 0.045, 1)
+[node name="Image" type="Sprite2D" parent="HoleContainer/Hole_2_2"]
+visible = false
+[node name="Fallback" type="Polygon2D" parent="HoleContainer/Hole_2_2"]
+polygon = PackedVector2Array(-78, -35, 78, -35, 78, 35, -78, 35)
+color = Color(1, 0, 0, 1)
 
 [node name="MoleContainer" type="Node2D" parent="."]
 
@@ -94,17 +116,9 @@ color = Color(0.12, 0.075, 0.045, 1)
 z_index = 100
 script = ExtResource("3_hammer")
 
-[node name="Head" type="Polygon2D" parent="Hammer"]
-position = Vector2(-12, -24)
-rotation = -0.42
-polygon = PackedVector2Array(-38, -22, 38, -22, 38, 22, -38, 22)
-color = Color(0.78, 0.81, 0.84, 1)
-
-[node name="Handle" type="Polygon2D" parent="Hammer"]
-position = Vector2(18, 28)
-rotation = -0.42
-polygon = PackedVector2Array(-7, -55, 7, -55, 7, 55, -7, 55)
-color = Color(0.42, 0.24, 0.1, 1)
+[node name="Fallback" type="Polygon2D" parent="Hammer"]
+polygon = PackedVector2Array(-42, -42, 42, -42, 42, 42, -42, 42)
+color = Color(1, 0, 0, 1)
 
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 10
