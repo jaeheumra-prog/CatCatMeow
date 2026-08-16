@@ -1,10 +1,11 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://src/field/gamepieces/gamepiece.tscn" id="1_base"]
 
 [ext_resource type="Script" path="res://src/field/cats/minion_cat.gd" id="2_minion"]
 [ext_resource type="PackedScene" path="res://src/field/combat/field_health.tscn" id="3_health"]
 [ext_resource type="PackedScene" path="res://src/field/combat/field_hit_box.tscn" id="4_hit_box"]
+[ext_resource type="PackedScene" path="res://src/field/combat/ui/field_world_health_bar.tscn" id="5_health_bar"]
 
 
 [node name="MinionCat" instance=ExtResource("1_base")]
@@ -16,3 +17,5 @@ max_health = 6
 [node name="FieldHitBox" parent="PathFollow2D" instance=ExtResource("4_hit_box")]
 team = &"player"
 health_path = NodePath("../../FieldHealth")
+
+[node name="WorldHealthBar" parent="." instance=ExtResource("5_health_bar")]

@@ -2,8 +2,10 @@ extends CanvasLayer
 
 const MAIN_SCENE_PATH := "res://src/main.tscn"
 const GRLAB_SCENE_PATH := "res://src/dev/dev_test_lab.tscn"
+const BOSS_SCENE_PATH := "res://src/dev/boss/boss_arena.tscn"
 const MINIGAME1_SCENE_PATH := "res://src/dev/minigames/fish_catch/fish_catch.tscn"
 const MINIGAME2_SCENE_PATH := "res://src/dev/minigames/whack_a_mole/mole_minigame.tscn"
+const MINIGAME3_SCENE_PATH := "res://src/dev/minigames/runner/runner_minigame.tscn"
 
 var _is_open := false
 var _was_tree_paused := false
@@ -61,6 +63,10 @@ func go_to_lab() -> void:
 	_request_scene_change(GRLAB_SCENE_PATH)
 
 
+func go_to_boss() -> void:
+	_request_scene_change(BOSS_SCENE_PATH)
+
+
 func go_to_main() -> void:
 	_request_scene_change(_return_scene_path if not _return_scene_path.is_empty() else MAIN_SCENE_PATH)
 
@@ -73,6 +79,10 @@ func go_to_minigame2() -> void:
 	_request_scene_change(MINIGAME2_SCENE_PATH)
 
 
+func go_to_minigame3() -> void:
+	_request_scene_change(MINIGAME3_SCENE_PATH)
+
+
 func _on_command_submitted(raw_command: String) -> void:
 	var command := raw_command.strip_edges().to_upper()
 	_command_input.clear()
@@ -82,6 +92,9 @@ func _on_command_submitted(raw_command: String) -> void:
 
 	_history.append_text("[color=#f6c177]> %s[/color]\n" % command)
 	match command:
+		"BOSS":
+			_write_system_message("보스 전투 공간으로 이동합니다.")
+			go_to_boss()
 		"GRLAB":
 			_write_system_message("GRLAB 개발자 테스트 공간으로 이동합니다.")
 			go_to_lab()
@@ -89,11 +102,13 @@ func _on_command_submitted(raw_command: String) -> void:
 			_write_system_message("기존 게임으로 돌아갑니다.")
 			go_to_main()
 		"HELP":
+			_write_system_message("BOSS       보스 전투 공간 이동")
 			_write_system_message(
 				"GRLAB      테스트 공간 이동\n"
 				+ "MAIN       기존 게임으로 복귀\n"
 				+ "MINIGAME1  생선 받아먹기\n"
 				+ "MINIGAME2  두더지 잡기\n"
+				+ "MINIGAME3  삐용 러너\n"
 				+ "CLEAR      콘솔 기록 지우기"
 			)
 		"CLEAR":
@@ -104,6 +119,9 @@ func _on_command_submitted(raw_command: String) -> void:
 		"MINIGAME2":
 			_write_system_message("두더지 잡기 미니게임을 실행합니다.")
 			go_to_minigame2()
+		"MINIGAME3", "RUNNER":
+			_write_system_message("삐용 러너 미니게임을 실행합니다.")
+			go_to_minigame3()
 		_:
 			_write_system_message("알 수 없는 명령어: %s (HELP를 입력하세요.)" % command)
 
@@ -119,7 +137,8 @@ func _request_scene_change(scene_path: String) -> void:
 		_write_system_message("이미 해당 공간에 있습니다.")
 		return
 
-	if scene_path == GRLAB_SCENE_PATH and current_scene and not current_scene.scene_file_path.is_empty():
+	if scene_path in [GRLAB_SCENE_PATH, BOSS_SCENE_PATH] \
+			and current_scene and not current_scene.scene_file_path.is_empty():
 		_return_scene_path = current_scene.scene_file_path
 
 	_change_scene.call_deferred(scene_path)

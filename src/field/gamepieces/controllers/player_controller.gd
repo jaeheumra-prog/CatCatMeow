@@ -153,6 +153,9 @@ func move_along_path(value: Array[Vector2i]) -> void:
 
 func move_to_pressed_key(input_direction: Vector2) -> void:
 	if is_active:
+		# 이동과 공격 키가 같은 프레임에 눌려도 공격이 새 방향으로 나가도록
+		# 경로 계산보다 먼저 바라보는 방향을 갱신합니다.
+		_gamepiece.direction = Directions.angle_to_direction(input_direction.angle())
 		var source_cell: = GamepieceRegistry.get_cell(_gamepiece)
 		var target_cell: = Vector2i.ZERO
 		
@@ -164,10 +167,7 @@ func move_to_pressed_key(input_direction: Vector2) -> void:
 		var new_move_path: = Gameboard.pathfinder.get_path_to_cell(source_cell, target_cell)
 		
 		# Path is invalid. Bump animation?
-		if new_move_path.size() < 1:
-			_gamepiece.direction = Directions.angle_to_direction(input_direction.angle())
-		
-		else:
+		if new_move_path.size() >= 1:
 			move_path = new_move_path.duplicate()
 
 

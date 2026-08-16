@@ -1,5 +1,8 @@
 extends Node2D
 
+const PLAYER_HEALTH_SCENE := preload("res://src/field/combat/field_health.tscn")
+const PLAYER_HIT_BOX_SCENE := preload("res://src/field/combat/field_hit_box.tscn")
+
 ## The cutscene that will play on starting a new game.
 @export var opening_cutscene: Cutscene
 
@@ -37,6 +40,7 @@ func _ready() -> void:
 				
 				new_gp.add_child(new_controller)
 				new_controller.is_active = true
+				_ensure_player_field_health(new_gp)
 
 				if player_attack:
 					var new_attack := player_attack.instantiate()
@@ -59,3 +63,19 @@ func _ready() -> void:
 	
 	if opening_cutscene:
 		opening_cutscene.run.call_deferred()
+
+
+func _ensure_player_field_health(gamepiece: Gamepiece) -> void:
+	if not gamepiece.has_node("FieldHealth"):
+		var health := PLAYER_HEALTH_SCENE.instantiate() as FieldHealth
+		health.max_health = 12
+		gamepiece.add_child(health)
+	if gamepiece.follower.has_node("FieldHitBox"):
+		return
+	var hit_box := PLAYER_HIT_BOX_SCENE.instantiate() as FieldHitBox
+	hit_box.team = &"player"
+	hit_box.health_path = NodePath("../../FieldHealth")
+	var shape := CircleShape2D.new()
+	shape.radius = 7.0
+	(hit_box.get_node("CollisionShape2D") as CollisionShape2D).shape = shape
+	gamepiece.follower.add_child(hit_box)

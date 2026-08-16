@@ -76,7 +76,10 @@ func _run() -> void:
 	await get_tree().create_timer(0.75).timeout
 	_check(not combo.is_attacking(), "combo did not finish")
 	_check(not combo.sword_pivot.visible, "sword sprite remained visible after combo")
-	_check(health.health == 5, "1 + 1 + 3 combo damage was not applied exactly once")
+	_check(
+		health.health == 5,
+		"1 + 1 + 3 combo damage was not applied exactly once (health=%d)" % health.health
+	)
 
 	print("FIELD COMBO SMOKE TEST PASSED" if not _failed else "FIELD COMBO SMOKE TEST FAILED")
 	stage.queue_free()

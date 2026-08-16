@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://m3oktjc6gmsb" path="res://src/field/field.gd" id="2_bkxev"]
 [ext_resource type="PackedScene" uid="uid://d2lj4blu56fte" path="res://src/field/gamepieces/controllers/player_controller.tscn" id="2_esa52"]
 [ext_resource type="PackedScene" uid="uid://bpwdh1r6nk1cs" path="res://src/field/combat/field_combo_attack.tscn" id="2_field_attack"]
+[ext_resource type="PackedScene" path="res://src/field/combat/ui/field_player_health_hud.tscn" id="2_health_hud"]
 [ext_resource type="Script" uid="uid://drugj534rnwxw" path="res://src/field/map.gd" id="2_la2p5"]
 [ext_resource type="TileSet" uid="uid://cnlvvllr0ici" path="res://src/field/gamepieces/controllers/cursor/tileset_cursor.tres" id="3_2v5er"]
 [ext_resource type="Resource" uid="uid://k63mv5dbd1uk" path="res://overworld/maps/gbprops.tres" id="3_esa52"]
@@ -315,6 +316,8 @@ size = Vector2(14, 23)
 
 [node name="Main" type="Node2D" unique_id=2072081668]
 scale = Vector2(15, 15)
+
+[node name="FieldPlayerHealthHUD" parent="." instance=ExtResource("2_health_hud")]
 
 [node name="Field" type="Node2D" parent="." unique_id=1807824682 node_paths=PackedStringArray("opening_cutscene", "player_default_gamepiece")]
 script = ExtResource("2_bkxev")

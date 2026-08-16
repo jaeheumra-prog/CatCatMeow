@@ -14,6 +14,7 @@ sword_texture_scale = Vector2(0.04, 0.04)
 [node name="SwordPivot" type="Node2D" parent="." unique_id=91592200]
 
 [node name="SwordSprite" type="Sprite2D" parent="SwordPivot" unique_id=1170099754]
+texture = ExtResource("2_ufv8c")
 
 [node name="FieldDamageSource" parent="." unique_id=1962976990 instance=ExtResource("2_damage")]
 position = Vector2(16, 0)

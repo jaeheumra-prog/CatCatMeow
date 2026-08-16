@@ -44,9 +44,13 @@ const ATTACKS := [
 @export var sword_texture: Texture2D
 ## 손잡이를 기준으로 검 이미지가 놓일 위치입니다.
 @export var sword_texture_offset := Vector2(18.0, 0.0)
-@export var sword_texture_scale := Vector2.ONE
+@export var sword_texture_scale := Vector2(0.04, 0.04)
 ## 원본 이미지가 오른쪽을 향하지 않을 때 방향을 보정합니다.
 @export_range(-180.0, 180.0, 1.0) var sword_texture_rotation_degrees := 0.0
+
+@export_group("Attack Trail")
+## 검 이미지가 있어도 휘두른 궤적을 함께 표시합니다.
+@export var show_attack_trail := true
 
 var _gamepiece: Gamepiece
 var _player_controller: PlayerController
@@ -274,7 +278,7 @@ func _sword_stretch(time: float, peak_time: float, end_time: float) -> float:
 
 
 func _draw() -> void:
-	if _combo_step < 0 or sword_texture != null:
+	if _combo_step < 0 or not show_attack_trail:
 		return
 
 	var attack: Dictionary = ATTACKS[_combo_step]

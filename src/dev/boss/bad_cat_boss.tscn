@@ -1,0 +1,37 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/dev/boss/bad_cat_boss.gd" id="1_boss"]
+[ext_resource type="Texture2D" path="res://assets/characters/boss/bad_cat.png" id="2_texture"]
+[ext_resource type="PackedScene" path="res://src/field/combat/field_health.tscn" id="3_health"]
+[ext_resource type="PackedScene" path="res://src/field/combat/field_hit_box.tscn" id="4_hitbox"]
+[ext_resource type="PackedScene" path="res://src/field/combat/field_damage_source.tscn" id="5_damage"]
+
+[sub_resource type="CircleShape2D" id="Circle_contact"]
+radius = 25.0
+
+[node name="BadCatBoss" type="Node2D"]
+z_index = 120
+script = ExtResource("1_boss")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(0, -25)
+texture = ExtResource("2_texture")
+
+[node name="FieldHealth" parent="." instance=ExtResource("3_health")]
+max_health = 120
+defense = 0
+
+[node name="FieldHitBox" parent="." instance=ExtResource("4_hitbox")]
+team = &"enemy"
+health_path = NodePath("../FieldHealth")
+
+[node name="ContactDamage" parent="." instance=ExtResource("5_damage")]
+team = &"enemy"
+damage = 1
+
+[node name="CollisionShape2D" parent="ContactDamage" index="0"]
+shape = SubResource("Circle_contact")
+
+[editable path="ContactDamage"]
+

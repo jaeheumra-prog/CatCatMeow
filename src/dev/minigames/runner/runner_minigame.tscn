@@ -1,0 +1,117 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/dev/minigames/runner/runner_minigame.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://src/dev/minigames/runner/rock_obstacle.tscn" id="2_rock"]
+[ext_resource type="Script" path="res://src/dev/minigames/runner/runner_player.gd" id="3_player"]
+[ext_resource type="PackedScene" path="res://assets/characters/bbiyong/bbiyong_lab_gfx.tscn" id="4_bbiyong"]
+
+[sub_resource type="RectangleShape2D" id="Rectangle_player"]
+size = Vector2(64, 76)
+
+[sub_resource type="StyleBoxFlat" id="Panel_top"]
+bg_color = Color(0.025, 0.035, 0.065, 0.92)
+border_width_bottom = 4
+border_color = Color(0.9, 0.7, 0.31, 1)
+
+[sub_resource type="StyleBoxFlat" id="Panel_gameover"]
+bg_color = Color(0.025, 0.02, 0.035, 0.94)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.95, 0.31, 0.3, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[node name="RunnerMiniGame" type="Node2D"]
+script = ExtResource("1_main")
+rock_scene = ExtResource("2_rock")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+
+[node name="Background" type="Sprite2D" parent="."]
+z_index = -10
+position = Vector2(960, 540)
+
+[node name="ObstacleContainer" type="Node2D" parent="."]
+
+[node name="LabPlayer" type="Area2D" parent="."]
+z_index = 10
+position = Vector2(960, 1015)
+script = ExtResource("3_player")
+move_speed = 650.0
+
+[node name="BbiyongLabGFX" parent="LabPlayer" instance=ExtResource("4_bbiyong")]
+scale = Vector2(0.32, 0.32)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LabPlayer"]
+position = Vector2(0, -53)
+shape = SubResource("Rectangle_player")
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="TopPanel" type="Panel" parent="UI"]
+offset_right = 1920.0
+offset_bottom = 100.0
+theme_override_styles/panel = SubResource("Panel_top")
+
+[node name="Title" type="Label" parent="UI"]
+offset_left = 710.0
+offset_top = 22.0
+offset_right = 1210.0
+offset_bottom = 74.0
+theme_override_font_sizes/font_size = 36
+text = "삐용 러너"
+horizontal_alignment = 1
+
+[node name="DistanceLabel" type="Label" parent="UI"]
+unique_name_in_owner = true
+offset_left = 34.0
+offset_top = 25.0
+offset_right = 500.0
+offset_bottom = 76.0
+theme_override_font_sizes/font_size = 30
+text = "DISTANCE  0.0 m"
+
+[node name="DashLabel" type="Label" parent="UI"]
+unique_name_in_owner = true
+offset_left = 1420.0
+offset_top = 25.0
+offset_right = 1885.0
+offset_bottom = 76.0
+theme_override_font_sizes/font_size = 30
+text = "DASH  READY"
+horizontal_alignment = 2
+
+[node name="HintLabel" type="Label" parent="UI"]
+offset_left = 530.0
+offset_top = 1024.0
+offset_right = 1390.0
+offset_bottom = 1065.0
+theme_override_font_sizes/font_size = 22
+text = "A / D 또는 ← / → 이동    Shift 대시    \\ → MAIN"
+horizontal_alignment = 1
+
+[node name="GameOverLabel" type="Label" parent="UI"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -150.0
+offset_right = 300.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/normal = SubResource("Panel_gameover")
+theme_override_font_sizes/font_size = 42
+text = "OUCH!\n0.0 m\nEnter로 재시작"
+horizontal_alignment = 1
+vertical_alignment = 1

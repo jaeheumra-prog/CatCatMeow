@@ -1,0 +1,108 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/dev/boss/boss_arena.gd" id="1_arena"]
+[ext_resource type="Script" path="res://src/field/combat/ui/field_health_bar.gd" id="2_bar"]
+[ext_resource type="TileSet" path="res://src/field/gamepieces/controllers/cursor/tileset_cursor.tres" id="3_cursor_tiles"]
+[ext_resource type="Script" path="res://src/field/gamepieces/controllers/cursor/field_cursor.gd" id="4_cursor_script"]
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.035, 0.025, 0.045, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.82, 0.19, 0.16, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="Style_player"]
+bg_color = Color(0.035, 0.045, 0.07, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.45, 0.75, 0.9, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="BossArena" type="Node2D"]
+script = ExtResource("1_arena")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(240, 136)
+zoom = Vector2(4, 4)
+
+[node name="Cursor" type="TileMapLayer" parent="."]
+z_index = 4000
+tile_set = ExtResource("3_cursor_tiles")
+script = ExtResource("4_cursor_script")
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 90
+
+[node name="PlayerPanel" type="PanelContainer" parent="UI"]
+offset_left = 22.0
+offset_top = 22.0
+offset_right = 340.0
+offset_bottom = 85.0
+theme_override_styles/panel = SubResource("Style_player")
+
+[node name="VBox" type="VBoxContainer" parent="UI/PlayerPanel"]
+
+[node name="Label" type="Label" parent="UI/PlayerPanel/VBox"]
+text = "BBIYONG HP"
+
+[node name="PlayerHealthBar" type="ProgressBar" parent="UI/PlayerPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 22)
+value = 100.0
+script = ExtResource("2_bar")
+
+[node name="BossPanel" type="PanelContainer" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 28.0
+offset_right = 300.0
+offset_bottom = 105.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="VBox" type="VBoxContainer" parent="UI/BossPanel"]
+
+[node name="Name" type="Label" parent="UI/BossPanel/VBox"]
+text = "BAD CAT"
+horizontal_alignment = 1
+
+[node name="BossHealthBar" type="ProgressBar" parent="UI/BossPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(580, 25)
+value = 100.0
+script = ExtResource("2_bar")
+color_full = Color(0.95, 0.16, 0.12, 1)
+color_normal = Color(0.95, 0.16, 0.12, 1)
+
+[node name="ResultLabel" type="Label" parent="UI"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -35.0
+offset_right = 260.0
+offset_bottom = 35.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "BOSS CLEAR!"
+horizontal_alignment = 1
+vertical_alignment = 1

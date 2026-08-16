@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="PackedScene" path="res://src/field/gamepieces/gamepiece.tscn" id="1_base"]
 [ext_resource type="Script" path="res://src/field/cats/enemy_cat.gd" id="2_enemy"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://src/field/cutscenes/popups/interaction_popup.tscn" id="5_popup"]
 [ext_resource type="PackedScene" path="res://src/field/combat/field_health.tscn" id="6_health"]
 [ext_resource type="PackedScene" path="res://src/field/combat/field_hit_box.tscn" id="7_hit_box"]
+[ext_resource type="PackedScene" path="res://src/field/combat/ui/field_world_health_bar.tscn" id="8_health_bar"]
 
 
 [node name="EnemyCat" instance=ExtResource("1_base")]
@@ -20,6 +21,8 @@ max_health = 6
 [node name="FieldHitBox" parent="PathFollow2D" instance=ExtResource("7_hit_box")]
 team = &"enemy"
 health_path = NodePath("../../FieldHealth")
+
+[node name="WorldHealthBar" parent="." instance=ExtResource("8_health_bar")]
 
 [node name="RecruitInteraction" parent="." instance=ExtResource("3_interaction")]
 script = ExtResource("4_recruit")

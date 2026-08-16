@@ -72,7 +72,6 @@ var _map_data: Dictionary = {}
 var _map_origin := Vector2.ZERO
 var _map_pixel_size := Vector2.ZERO
 var _walkable_cells: Dictionary[Vector2i, bool] = {}
-var _hover_cell := Gameboard.INVALID_CELL
 var _lab_properties: GameboardProperties
 var _player: Gamepiece
 var _map_render_root: Node2D
@@ -201,16 +200,6 @@ func _on_enemy_cat_recruit_requested(enemy) -> void:
 		"RECRUIT COMPLETE : ",
 		minion.name
 	)
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion:
-		var cell := Gameboard.pixel_to_cell(get_global_mouse_position())
-		_hover_cell = cell if _walkable_cells.has(cell) else Gameboard.INVALID_CELL
-		queue_redraw()
-	elif event.is_action_released("select") and _hover_cell != Gameboard.INVALID_CELL:
-		FieldEvents.cell_selected.emit(_hover_cell)
-		get_viewport().set_input_as_handled()
-
-
 func _draw() -> void:
 	draw_rect(Rect2(Vector2(-5000, -5000), Vector2(10000, 10000)), Color("100f19"))
 	if _map_data.is_empty():
@@ -219,13 +208,6 @@ func _draw() -> void:
 	var map_rect := Rect2(_map_origin, _map_pixel_size)
 	draw_rect(map_rect.grow(18), Color("07111d"), true)
 	draw_rect(map_rect, Color("9ccfd8"), false, 3.0)
-	if _hover_cell != Gameboard.INVALID_CELL:
-		var hover_rect := Rect2(
-			_map_origin + Vector2(_hover_cell) * MAP_CELL_SIZE,
-			Vector2.ONE * MAP_CELL_SIZE
-		)
-		draw_rect(hover_rect, Color(0.96, 0.76, 0.47, 0.32), true)
-		draw_rect(hover_rect, Color("f6c177"), false, 1.0)
 
 
 func _create_map_renderer() -> void:

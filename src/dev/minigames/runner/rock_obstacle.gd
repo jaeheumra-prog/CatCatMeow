@@ -1,0 +1,2 @@
+class_name RockObstacle
+extends RunnerObstaclePiece
