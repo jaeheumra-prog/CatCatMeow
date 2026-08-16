@@ -23,8 +23,9 @@ const PLAYER_SCENE := preload("res://src/field/gamepieces/gamepiece.tscn")
 const PLAYER_CONTROLLER_SCENE := preload("res://src/field/gamepieces/controllers/player_controller.tscn")
 const PLAYER_ANIMATION_SCENE := preload("res://assets/characters/bbiyong/bbiyong_lab_gfx.tscn")
 const CAMERA_SHAKE_SCRIPT := preload("res://src/common/camera_shake_2d.gd")
-const PLAYER_VISUAL_SCALE := Vector2(0.2, 0.2)
-const CAMERA_ZOOM := Vector2(2.0, 2.0)
+# 320x330 삐용 프레임을 메인 16x16 로봇과 비슷한 화면 크기로 맞춥니다.
+const PLAYER_VISUAL_SCALE := Vector2(0.05, 0.05)
+const CAMERA_ZOOM := Vector2(10.0, 10.0)
 
 const CHARACTER_PREVIEWS := [
 	["GoBot", "res://overworld/characters/gobot_gfx.tscn"],

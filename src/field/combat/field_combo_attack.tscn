@@ -1,14 +1,21 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://bpwdh1r6nk1cs"]
 
-[ext_resource type="Script" path="res://src/field/combat/field_combo_attack.gd" id="1_combo"]
+[ext_resource type="Script" uid="uid://25wgknxiuxo6" path="res://src/field/combat/field_combo_attack.gd" id="1_combo"]
 [ext_resource type="PackedScene" path="res://src/field/combat/field_damage_source.tscn" id="2_damage"]
+[ext_resource type="Texture2D" uid="uid://bqsv1mjqgnbhy" path="res://cat_hand.png" id="2_ufv8c"]
 
-[node name="FieldComboAttack" type="Node2D"]
+[node name="FieldComboAttack" type="Node2D" unique_id=81913182]
 z_index = 200
 script = ExtResource("1_combo")
+sword_texture = ExtResource("2_ufv8c")
+sword_texture_offset = Vector2(16, 0)
+sword_texture_scale = Vector2(0.04, 0.04)
 
-[node name="FieldDamageSource" parent="." instance=ExtResource("2_damage")]
+[node name="SwordPivot" type="Node2D" parent="." unique_id=91592200]
+
+[node name="SwordSprite" type="Sprite2D" parent="SwordPivot" unique_id=1170099754]
+
+[node name="FieldDamageSource" parent="." unique_id=1962976990 instance=ExtResource("2_damage")]
 position = Vector2(16, 0)
 scale = Vector2(0.225, 0.225)
 team = &"player"
-one_hit_per_activation = true

@@ -9,6 +9,12 @@ func _ready() -> void:
 
 func _run() -> void:
 	_check(InputMap.has_action("attack"), "attack input action is missing")
+	var has_right_click := false
+	for attack_event in InputMap.action_get_events("attack"):
+		if attack_event is InputEventMouseButton \
+				and attack_event.button_index == MOUSE_BUTTON_RIGHT:
+			has_right_click = true
+	_check(has_right_click, "right mouse button is not mapped to attack")
 
 	var properties := GameboardProperties.new()
 	properties.extents = Rect2i(0, 0, 4, 4)
@@ -27,6 +33,13 @@ func _run() -> void:
 	var combo_scene := load("res://src/field/combat/field_combo_attack.tscn") as PackedScene
 	var combo := combo_scene.instantiate() as FieldComboAttack
 	player.add_child(combo)
+	_check(combo.has_node("SwordPivot/SwordSprite"), "replaceable sword sprite is missing")
+	_check(combo.sword_texture != null, "cat_hand.png is not assigned as the sword texture")
+	var sword_image := Image.create(8, 2, false, Image.FORMAT_RGBA8)
+	sword_image.fill(Color.WHITE)
+	var sword_texture := ImageTexture.create_from_image(sword_image)
+	combo.set_sword_texture(sword_texture)
+	_check(combo.sword_sprite.texture == sword_texture, "custom sword texture was not applied")
 
 	var target := Node2D.new()
 	target.position = player.position + Vector2.DOWN * 16.0
@@ -48,7 +61,11 @@ func _run() -> void:
 	hit_box.add_child(hit_shape)
 	target.add_child(hit_box)
 
-	_check(combo.request_attack(), "first attack did not start")
+	# 이동 중인 상태에서도 첫 공격을 시작할 수 있어야 합니다.
+	player.set_process(true)
+	_check(combo.request_attack(), "first attack did not start while moving")
+	player.set_process(false)
+	_check(combo.sword_pivot.visible, "sword sprite did not appear during attack")
 	await get_tree().create_timer(0.12).timeout
 	_check(combo.request_attack(), "second attack was not queued")
 
@@ -58,9 +75,12 @@ func _run() -> void:
 
 	await get_tree().create_timer(0.75).timeout
 	_check(not combo.is_attacking(), "combo did not finish")
+	_check(not combo.sword_pivot.visible, "sword sprite remained visible after combo")
 	_check(health.health == 5, "1 + 1 + 3 combo damage was not applied exactly once")
 
 	print("FIELD COMBO SMOKE TEST PASSED" if not _failed else "FIELD COMBO SMOKE TEST FAILED")
+	stage.queue_free()
+	await get_tree().process_frame
 	get_tree().quit(1 if _failed else 0)
 
 

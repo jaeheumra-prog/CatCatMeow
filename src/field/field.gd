@@ -7,6 +7,9 @@ extends Node2D
 ## controls.
 @export var player_controller: PackedScene
 
+## 조종 중인 Gamepiece에 자동으로 붙일 실시간 필드 공격 컴포넌트입니다.
+@export var player_attack: PackedScene
+
 ## The first gamepiece that the player will control. This may be null and assigned via an
 ## introductory cutscene instead.
 @export var player_default_gamepiece: Gamepiece
@@ -21,9 +24,11 @@ func _ready() -> void:
 			var new_gp: = Player.gamepiece
 			Camera.gamepiece = new_gp
 	
-			# Free up any lingering controller(s).
+			# 이전 조종 캐릭터에 남은 컨트롤러와 공격 컴포넌트를 정리합니다.
 			for controller in get_tree().get_nodes_in_group(PlayerController.GROUP):
 				controller.queue_free()
+			for attack in get_tree().get_nodes_in_group(FieldComboAttack.GROUP):
+				attack.queue_free()
 			
 			if new_gp:
 				var new_controller = player_controller.instantiate()
@@ -32,6 +37,12 @@ func _ready() -> void:
 				
 				new_gp.add_child(new_controller)
 				new_controller.is_active = true
+
+				if player_attack:
+					var new_attack := player_attack.instantiate()
+					assert(new_attack is FieldComboAttack,
+						"Field.player_attack must instantiate a FieldComboAttack.")
+					new_gp.add_child(new_attack)
 	)
 	
 	Player.gamepiece = player_default_gamepiece
