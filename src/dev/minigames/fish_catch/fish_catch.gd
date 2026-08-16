@@ -66,7 +66,7 @@ func spawn_fish() -> void:
 		return
 
 
-	var fish_Instance := fish_scene.instantiate() 
+	# var fish_Instance := fish_scene.instantiate() # Unused duplicate instance; kept for reference.
 
 	if fish_instance is not LabFish:
 		push_error("Fish Catch: fish_scene의 루트가 LabFish가 아닙니다.")

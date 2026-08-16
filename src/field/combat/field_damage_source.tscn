@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/field/combat/field_damage_source.gd" id="1_damage"]
+
+[sub_resource type="CircleShape2D" id="CircleShape_damage"]
+radius = 40.0
+
+[node name="FieldDamageSource" type="Area2D"]
+collision_layer = 128
+collision_mask = 64
+monitoring = false
+monitorable = false
+script = ExtResource("1_damage")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape_damage")
+disabled = true

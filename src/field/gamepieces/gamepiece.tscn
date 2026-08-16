@@ -1,14 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://b626e0bngfvjj"]
+[gd_scene format=3 uid="uid://b626e0bngfvjj"]
 
 [ext_resource type="Script" uid="uid://bn24acltw2l44" path="res://src/field/gamepieces/gamepiece.gd" id="1_xhsbn"]
 
-[node name="Gamepiece" type="Path2D"]
+[node name="Gamepiece" type="Path2D" unique_id=1399251535]
 y_sort_enabled = true
 script = ExtResource("1_xhsbn")
 
-[node name="PathFollow2D" type="PathFollow2D" parent="."]
+[node name="PathFollow2D" type="PathFollow2D" parent="." unique_id=1567499282]
 loop = false
 
-[node name="CameraAnchor" type="RemoteTransform2D" parent="PathFollow2D"]
+[node name="CameraAnchor" type="RemoteTransform2D" parent="PathFollow2D" unique_id=821053429]
 update_rotation = false
 update_scale = false

@@ -1,5 +1,14 @@
 # 대냥시대 Godot 프로젝트 작업 지침
 
+## Registry 향후 개편 결정
+
+- 현재 `GamepieceRegistry`는 `등록 = 위치 추적 = 셀 점유 = 이동 차단` 구조를 유지한다.
+- Fish, Coin, Effect처럼 격자 셀을 점유하지 않는 객체는 당분간 `Gamepiece`가 아닌 `Area2D` 또는 `Node2D` 계층으로 구현한다.
+- 객체별 `registry`/`nonregistry` 그룹 두 개나 단순 `use_registry` 플래그는 지금 도입하지 않는다.
+- 동일 셀에 여러 추적 객체가 필요하거나, 위치는 추적하지만 이동을 막지 않는 객체가 실제로 필요해지면 Registry 개편 시점으로 판단한다.
+- 개편 시 `RegistryMode { NONE, BLOCKING, TRACKED }` enum을 우선 설계안으로 사용한다.
+- `TRACKED` 도입 시 셀 차단 저장소와 객체 위치 추적 저장소를 분리하고, Pathfinder는 `BLOCKING` 객체에만 반응하도록 함께 수정한다.
+
 이 저장소는 GDQuest Godot Open RPG 데모를 기반으로 제작 중인 탑뷰 RPG/전략 게임 **대냥시대**다. 주인공 고양이 삐용이 고양이 마을에서 다른 고양이들을 포섭하고 세력을 확장해 마을의 1짱이 되는 게임을 목표로 한다.
 
 ## 실행 환경

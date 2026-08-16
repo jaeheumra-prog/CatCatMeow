@@ -7,6 +7,10 @@
 class_name FieldCamera
 extends Camera2D
 
+const CAMERA_SHAKE_SCRIPT := preload("res://src/common/camera_shake_2d.gd")
+
+var _camera_shake
+
 @export var gameboard_properties: GameboardProperties:
 	set(value):
 		_on_viewport_resized()
@@ -24,8 +28,19 @@ extends Camera2D
 
 
 func _ready() -> void:
+	# The field camera owns the reusable effect so callers can simply use Camera.shake().
+	_camera_shake = CAMERA_SHAKE_SCRIPT.new()
+	_camera_shake.name = "CameraShake"
+	add_child(_camera_shake)
+
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_on_viewport_resized()
+
+
+## Shakes the active field camera without changing its tracking position or map limits.
+func shake(amplitude := 8.0, duration := 0.2) -> void:
+	if _camera_shake:
+		_camera_shake.start_shake(amplitude, duration)
 
 
 func reset_position() -> void:

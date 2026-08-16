@@ -6,6 +6,9 @@ class_name PlayerController extends GamepieceController
 
 const GROUP: = "_PLAYER_CONTROLLER_GROUP"
 
+## Emitted only after a valid dash path has been found and the dash is about to begin.
+signal dash_started
+
 # Keep track of a targeted interaction. Used to face & interact with the object at a path's end.
 # It is reset on cancelling the move path or continuing movement via arrows/gamepad directions.
 var _target_interaction: Interaction = null
@@ -27,7 +30,7 @@ var _last_input_direction: = Vector2.ZERO
 # shape.
 @onready var _player_collision: = $PlayerCollision as Area2D
 
-@export var dash_enabled: bool = true
+@export var dash_enabled: bool = false
 @export_range(1, 10, 1) var dash_cells: int = 3
 @export_range(1.0, 10.0, 0.1) var dash_speed_multiplier: float = 3.0
 
@@ -135,6 +138,7 @@ func dash() -> void:
 	if dash_path.is_empty():
 		return
 
+	dash_started.emit()
 	_is_dashing = true
 	_gamepiece.move_speed = _normal_move_speed * dash_speed_multiplier
 	move_path = dash_path.duplicate()

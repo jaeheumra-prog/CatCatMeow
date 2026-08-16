@@ -1,18 +1,19 @@
 [gd_scene format=3 uid="uid://chxbp3f5l15um"]
 
 [ext_resource type="Script" uid="uid://dmb6h1hbr3fkc" path="res://src/dev/minigames/fish_catch/lab_fish.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dvo4ohgwaxjmg" path="res://assets/items/feather.png" id="2_feather"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape_fish"]
-size = Vector2(100, 60)
+size = Vector2(80, 120)
 
 [node name="LabFish" type="Area2D" unique_id=1037162393]
 collision_layer = 2
 script = ExtResource("1_script")
 
-[node name="DebugBody" type="Polygon2D" parent="." unique_id=440785768]
+[node name="FeatherSprite" type="Sprite2D" parent="." unique_id=440785768]
 z_index = 100
-color = Color(1, 0, 0, 1)
-polygon = PackedVector2Array(-50, -30, 50, -30, 50, 30, -50, 30)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_feather")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=880527816]
 shape = SubResource("RectangleShape_fish")

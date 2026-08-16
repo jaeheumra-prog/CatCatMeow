@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/field/combat/field_combo_attack.gd" id="1_combo"]
+[ext_resource type="PackedScene" path="res://src/field/combat/field_damage_source.tscn" id="2_damage"]
+
+[node name="FieldComboAttack" type="Node2D"]
+z_index = 200
+script = ExtResource("1_combo")
+
+[node name="FieldDamageSource" parent="." instance=ExtResource("2_damage")]
+position = Vector2(16, 0)
+scale = Vector2(0.225, 0.225)
+team = &"player"
+one_hit_per_activation = true

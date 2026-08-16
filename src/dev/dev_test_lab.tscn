@@ -50,7 +50,7 @@ text = "GRLAB  개발자 테스트 공간"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.776471, 0.8, 0.886275, 1)
 theme_override_font_sizes/font_size = 20
-text = "WASD/방향키 또는 지도 클릭: 캐릭터 이동 · 카메라 자동 추적 · \\ 콘솔"
+text = "WASD/방향키: 이동 · Shift: 대시 · F: 3단 공격 · \\ 콘솔"
 
 [node name="ReturnButton" type="Button" parent="UI/Header/Margin/Row"]
 custom_minimum_size = Vector2(230, 62)

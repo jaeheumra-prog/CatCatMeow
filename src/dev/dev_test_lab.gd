@@ -1,11 +1,30 @@
 extends Node2D
 
+#네임테그 / nametag / NAMETAGE
+const ENEMY_CAT_NAME_COLOR := Color("#ff4d4d")
+const MINION_CAT_NAME_COLOR := Color("#4d9dff")
+
+const TEST_ENEMY_CAT_CELL := Vector2i(80, 60)
+const ENEMY_CAT_SCENE := preload(
+	"res://src/field/cats/enemy_cat.tscn"
+)
+
+const MINION_CAT_SCENE := preload(
+	"res://src/field/cats/minion_cat.tscn"
+)
+const CAT_NAME_TAG_SCRIPT := preload("res://src/field/cats/cat_name_tag.gd")
+const FIELD_HEALTH_SCENE := preload("res://src/field/combat/field_health.tscn")
+const FIELD_HIT_BOX_SCENE := preload("res://src/field/combat/field_hit_box.tscn")
+const FIELD_COMBO_ATTACK_SCENE := preload("res://src/field/combat/field_combo_attack.tscn")
+
 const MAP_DATA_PATH := "res://assets/maps/my_map_compact.json"
 const MAP_CELL_SIZE := 16.0
 const PLAYER_SCENE := preload("res://src/field/gamepieces/gamepiece.tscn")
 const PLAYER_CONTROLLER_SCENE := preload("res://src/field/gamepieces/controllers/player_controller.tscn")
 const PLAYER_ANIMATION_SCENE := preload("res://assets/characters/bbiyong/bbiyong_lab_gfx.tscn")
-const CAMERA_ZOOM := Vector2.ONE
+const CAMERA_SHAKE_SCRIPT := preload("res://src/common/camera_shake_2d.gd")
+const PLAYER_VISUAL_SCALE := Vector2(0.2, 0.2)
+const CAMERA_ZOOM := Vector2(2.0, 2.0)
 
 const CHARACTER_PREVIEWS := [
 	["GoBot", "res://overworld/characters/gobot_gfx.tscn"],
@@ -56,6 +75,7 @@ var _hover_cell := Gameboard.INVALID_CELL
 var _lab_properties: GameboardProperties
 var _player: Gamepiece
 var _map_render_root: Node2D
+var _camera_shake
 
 @onready var _test_objects: Node2D = $TestObjects
 @onready var _camera: Camera2D = $Camera2D
@@ -63,16 +83,123 @@ var _map_render_root: Node2D
 
 
 func _ready() -> void:
+	# GRLAB uses its own camera, so attach the same reusable shake component used by FieldCamera.
+	_camera_shake = CAMERA_SHAKE_SCRIPT.new()
+	_camera_shake.name = "CameraShake"
+	_camera.add_child(_camera_shake)
+
 	_map_data = _load_map_data()
 	_setup_map_transform()
 	_create_map_renderer()
 	_setup_gameboard()
 	_create_preview_objects()
+
 	_spawn_player()
+
+	_spawn_test_enemy_cat()
 	_camera.make_current()
 	queue_redraw()
 
+func _find_enemy_test_cell(player_cell: Vector2i) -> Vector2i:
+	var offsets: Array[Vector2i] = [
+		Vector2i(4, 0),
+		Vector2i(-4, 0),
+		Vector2i(0, 4),
+		Vector2i(0, -4),
 
+		Vector2i(5, 0),
+		Vector2i(-5, 0),
+		Vector2i(0, 5),
+		Vector2i(0, -5)
+	]
+
+	for offset in offsets:
+		var cell: Vector2i = player_cell + offset
+
+		# 걸을 수 없는 셀
+		if not _walkable_cells.has(cell):
+			continue
+
+		# 이미 다른 Gamepiece가 있는 셀
+		if GamepieceRegistry.get_gamepiece(cell) != null:
+			continue
+
+		return cell
+
+	return Gameboard.INVALID_CELL
+
+
+func _on_enemy_cat_recruit_requested(enemy) -> void:
+	if not is_instance_valid(enemy):
+		return
+
+	var enemy_cell: Vector2i = GamepieceRegistry.get_cell(enemy)
+
+	if enemy_cell == Gameboard.INVALID_CELL:
+		push_error("Recruit: EnemyCat의 셀을 찾을 수 없습니다.")
+		return
+
+	# EnemyCat의 기존 상태 보존
+	var old_animation_scene: PackedScene = enemy.animation_scene
+	var old_move_speed: float = enemy.move_speed
+	var old_direction = enemy.direction
+	var old_z_index: int = enemy.z_index
+	var old_field_health := enemy.get_node_or_null("FieldHealth") as FieldHealth
+	var old_health_value := old_field_health.health if old_field_health != null else 6
+	var old_max_health := old_field_health.max_health if old_field_health != null else 6
+
+	print(
+		"ENEMY -> MINION | cell = ",
+		enemy_cell
+	)
+
+	# =========================
+	# EnemyCat 제거
+	# =========================
+
+	enemy.queue_free()
+
+	# GamepieceRegistry에서도 완전히 제거될 때까지 기다림
+	await enemy.tree_exited
+
+
+	# =========================
+	# MinionCat 생성
+	# =========================
+
+	var minion := MINION_CAT_SCENE.instantiate() as MinionCat
+
+	if minion == null:
+		push_error("MinionCat 생성 실패")
+		return
+
+	minion.name = "TestMinionCat"
+	minion.position = Gameboard.cell_to_pixel(enemy_cell)
+	minion.move_speed = old_move_speed
+	minion.z_index = old_z_index
+
+	add_child(minion)
+
+	# 기존 EnemyCat과 같은 그래픽 사용
+	minion.animation_scene = old_animation_scene
+	if minion.field_health != null:
+		minion.field_health.max_health = old_max_health
+		minion.field_health.set_health(old_health_value)
+
+	# GRLAB 삐용 그래픽을 임시 사용 중이므로 같은 비율 적용
+	_apply_gamepiece_visual_scale(minion)
+	_add_cat_name_label(
+		minion,
+		"동료고양이",
+		MINION_CAT_NAME_COLOR
+	)
+
+	minion.direction = old_direction
+
+	print(
+		"RECRUIT COMPLETE : ",
+		minion.name
+	)
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var cell := Gameboard.pixel_to_cell(get_global_mouse_position())
@@ -318,19 +445,82 @@ func _spawn_player() -> void:
 	_player.move_speed = 96.0
 	_player.z_index = 100
 	_player.animation_scene = PLAYER_ANIMATION_SCENE
-	_player.add_child(PLAYER_CONTROLLER_SCENE.instantiate())
+	#var visual_root := _player.get_node("PathFollow2D") as PathFollow2D
+	#visual_root.scale = PLAYER_VISUAL_SCALE
+	_apply_gamepiece_visual_scale(_player)
+	var controller := PLAYER_CONTROLLER_SCENE.instantiate() as PlayerController
+	controller.dash_enabled = true
+	controller.dash_started.connect(_on_player_dash_started)
+	_player.add_child(controller)
 	add_child(_player)
+	_add_field_combat_components(_player, &"player", 12)
+	var combo_attack := FIELD_COMBO_ATTACK_SCENE.instantiate() as FieldComboAttack
+	combo_attack.attack_hit.connect(_on_player_attack_hit)
+	_player.add_child(combo_attack)
 	Player.gamepiece = _player
 
 	_camera.zoom = CAMERA_ZOOM
-	_camera.position = _player.position
-	_camera.position_smoothing_enabled = true
-	_camera.position_smoothing_speed = 8.0
-	_camera.limit_left = 0
-	_camera.limit_top = 0
-	_camera.limit_right = int(_map_pixel_size.x)
-	_camera.limit_bottom = int(_map_pixel_size.y)
-	_player.animation_transform.remote_path = _player.animation_transform.get_path_to(_camera)
+	_camera.anchor_mode = Camera2D.ANCHOR_MODE_DRAG_CENTER
+	_camera.offset = Vector2.ZERO
+
+	_camera.global_position = _player.global_position# 처음부터 플레이어 위치
+
+	_camera.position_smoothing_enabled = false #
+	_camera.limit_enabled = false #카메라 중앙 그거 멈춤
+
+	_player.animation_transform.update_position = true
+	_player.animation_transform.update_rotation = false
+	_player.animation_transform.update_scale = false
+	_player.animation_transform.use_global_coordinates = true
+	_player.animation_transform.remote_path = \
+	_player.animation_transform.get_path_to(_camera)
+
+
+	#_camera.position_smoothing_speed = 8.0
+	#_camera.limit_left = 0
+	#_camera.limit_top = 0
+	#_camera.limit_right = int(_map_pixel_size.x)
+	#_camera.limit_bottom = int(_map_pixel_size.y-100)
+	#_player.animation_transform.remote_path = _player.animation_transform.get_path_to(_camera)
+
+
+func _on_player_dash_started() -> void:
+	# CAMERA_ZOOM also magnifies world-space offsets, so a small amplitude is enough in GRLAB.
+	_camera_shake.start_shake(4.0, 0.15)
+
+
+func _on_player_attack_hit(
+		combo_step: int,
+		_hit_box: FieldHitBox,
+		applied_damage: int
+) -> void:
+	if applied_damage <= 0:
+		return
+	_camera_shake.start_shake(2.0 + combo_step, 0.1)
+
+
+func _add_field_combat_components(
+		gamepiece: Gamepiece,
+		team: StringName,
+		max_health: int
+) -> void:
+	if gamepiece == null or gamepiece.has_node("FieldHealth"):
+		return
+
+	var health := FIELD_HEALTH_SCENE.instantiate() as FieldHealth
+	health.max_health = max_health
+	gamepiece.add_child(health)
+
+	var follower := gamepiece.get_node_or_null("PathFollow2D") as PathFollow2D
+	if follower == null:
+		push_error("Field combat setup failed: '%s' has no PathFollow2D." % gamepiece.name)
+		health.queue_free()
+		return
+
+	var hit_box := FIELD_HIT_BOX_SCENE.instantiate() as FieldHitBox
+	hit_box.team = team
+	hit_box.health_path = NodePath("../../FieldHealth")
+	follower.add_child(hit_box)
 
 
 func _find_spawn_cell() -> Vector2i:
@@ -482,5 +672,147 @@ func _exit_tree() -> void:
 		Gameboard.pathfinder.clear()
 
 
+
 func _on_return_pressed() -> void:
 	DeveloperConsole.go_to_main()
+
+func _spawn_test_enemy_cat() -> void:
+	var enemy_cell: Vector2i = TEST_ENEMY_CAT_CELL
+
+	# 지정 위치 검사
+	if not _walkable_cells.has(enemy_cell):
+		push_error(
+			"EnemyCat 테스트: 지정한 셀이 걸을 수 없는 위치입니다. cell=%s"
+			% enemy_cell
+		)
+		return
+
+	if GamepieceRegistry.get_gamepiece(enemy_cell) != null:
+		push_error(
+			"EnemyCat 테스트: 지정한 셀에 이미 다른 Gamepiece가 있습니다. cell=%s"
+			% enemy_cell
+		)
+		return
+
+	# =========================
+	# EnemyCat 생성
+	# =========================
+
+	var enemy := ENEMY_CAT_SCENE.instantiate() as EnemyCat
+
+	if enemy == null:
+		push_error("EnemyCat 생성 실패")
+		return
+
+	enemy.name = "TestEnemyCat"
+	enemy.position = Gameboard.cell_to_pixel(enemy_cell)
+	enemy.move_speed = 64.0
+	enemy.z_index = 100
+
+	# 임시로 삐용 그래픽
+	enemy.animation_scene = PLAYER_ANIMATION_SCENE
+
+	# 삐용과 같은 크기
+	_apply_gamepiece_visual_scale(enemy)
+
+
+	add_child(enemy)
+	# 이름표
+	_add_cat_name_label(
+		enemy,
+		"적고양이",
+		ENEMY_CAT_NAME_COLOR
+	)
+
+	# 편입 신호
+	enemy.recruit_requested.connect(
+		_on_enemy_cat_recruit_requested
+	)
+
+	#add_child(enemy)
+
+	print(
+		"ENEMY CAT SPAWNED | cell = ",
+		enemy_cell,
+		" | pixel = ",
+		Gameboard.cell_to_pixel(enemy_cell)
+	)
+func _apply_gamepiece_visual_scale(gamepiece: Gamepiece) -> void:  #삐용이 크기로 통일하도록 만드는 개쩔어버리는 시발 함수
+	if gamepiece == null:
+		return
+
+	var visual_root := gamepiece.get_node_or_null("PathFollow2D") as PathFollow2D
+
+	if visual_root == null:
+		push_warning(
+			"Gamepiece '%s'에 PathFollow2D가 없습니다."
+			% gamepiece.name
+		)
+		return
+
+	visual_root.scale = PLAYER_VISUAL_SCALE
+
+#이름표 생성함수
+func _add_cat_name_label(
+	gamepiece: Gamepiece,
+	display_name: String,
+	name_color: Color
+) -> void:
+
+	if gamepiece == null:
+		return
+
+	var follower := gamepiece.get_node_or_null("PathFollow2D") as PathFollow2D
+
+	if follower == null:
+		push_warning(
+			"Gamepiece '%s'에 PathFollow2D가 없습니다."
+			% gamepiece.name
+		)
+		return
+
+	if follower.has_node("CatNameTag"):
+		return
+
+
+	# =========================
+	# 이름표 루트
+	# =========================
+
+	var tag_root := CAT_NAME_TAG_SCRIPT.new() as CatNameTag
+	tag_root.name = "CatNameTag"
+	tag_root.z_index = 4096
+	follower.add_child(tag_root)
+	tag_root.setup(follower, _camera)
+
+
+	# =========================
+	# 실제 이름
+	# =========================
+
+	var label := Label.new()
+
+	label.name = "CatNameLabel"
+	label.text = "<%s>" % display_name
+
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	label.add_theme_font_size_override(
+		"font_size",
+		16
+	)
+
+	label.add_theme_color_override(
+		"font_color",
+		name_color
+	)
+
+	tag_root.add_child(label)
+
+	# Control 노드는 트리에 들어갈 때 레이아웃 값이 다시 계산될 수 있으므로,
+	# 자식으로 추가한 다음 이름표의 중심 위치와 크기를 확정한다.
+	label.set_deferred("size", Vector2(120.0, 26.0))
+	label.set_deferred("position", Vector2(-60.0, -13.0))
