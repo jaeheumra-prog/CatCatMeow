@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/field/cats/roster/minion_cat_collection_ui.gd" id="1_ui"]
+[ext_resource type="Script" path="res://src/field/cats/roster/minion_cat_work_slot.gd" id="2_slot"]
 
 [sub_resource type="StyleBoxFlat" id="Panel_main"]
 bg_color = Color(0.055, 0.065, 0.095, 0.98)
@@ -148,6 +149,182 @@ text = "고양이 카드를 선택하세요."
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
+
+[node name="WorkSection" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
+custom_minimum_size = Vector2(0, 205)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WorkHeader" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection"]
+layout_mode = 2
+
+[node name="WorkTitle" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/WorkHeader"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "고양이 작업 배치"
+
+[node name="FeedbackLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/WorkHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.56, 0.89, 0.64, 1)
+theme_override_font_sizes/font_size = 19
+horizontal_alignment = 2
+
+[node name="Slots" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="FishingSlot" type="PanelContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 165)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("2_slot")
+work_type = 1
+
+[node name="Margin" type="MarginContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/FishingSlot"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/FishingSlot/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/FishingSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "낚시"
+horizontal_alignment = 1
+
+[node name="LockLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/FishingSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.47, 0.5, 1)
+theme_override_font_sizes/font_size = 15
+text = "잠김 · CATWORKUNLOCK FISHING"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="DropHint" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/FishingSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.67, 0.86, 1)
+theme_override_font_sizes/font_size = 15
+text = "고양이 카드를 여기에 놓기"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="AssignedList" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/FishingSlot/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ClaimButton" type="Button" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/FishingSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "완료 보상 받기 (0)"
+
+[node name="RaidSlot" type="PanelContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 165)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("2_slot")
+work_type = 2
+
+[node name="Margin" type="MarginContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/RaidSlot"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/RaidSlot/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/RaidSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "약탈"
+horizontal_alignment = 1
+
+[node name="LockLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/RaidSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.47, 0.5, 1)
+theme_override_font_sizes/font_size = 15
+text = "잠김 · CATWORKUNLOCK RAID"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="DropHint" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/RaidSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.67, 0.86, 1)
+theme_override_font_sizes/font_size = 15
+text = "고양이 카드를 여기에 놓기"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="AssignedList" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/RaidSlot/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ClaimButton" type="Button" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/RaidSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "완료 보상 받기 (0)"
+
+[node name="BattleSlot" type="PanelContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 165)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("2_slot")
+work_type = 3
+
+[node name="Margin" type="MarginContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/BattleSlot"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/BattleSlot/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/BattleSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "전투"
+horizontal_alignment = 1
+
+[node name="LockLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/BattleSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.47, 0.5, 1)
+theme_override_font_sizes/font_size = 15
+text = "잠김 · CATWORKUNLOCK BATTLE"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="DropHint" type="Label" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/BattleSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.67, 0.86, 1)
+theme_override_font_sizes/font_size = 15
+text = "고양이 카드를 여기에 놓기"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="AssignedList" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/BattleSlot/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ClaimButton" type="Button" parent="Overlay/Panel/Margin/MainVBox/WorkSection/Slots/BattleSlot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "완료 보상 받기 (0)"
 
 [node name="CommandHint" type="Label" parent="Overlay/Panel/Margin/MainVBox"]
 layout_mode = 2

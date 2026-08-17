@@ -118,6 +118,13 @@ func get_by_number(number: int) -> MinionCatData:
 	return data.cats[number - 1]
 
 
+func get_number_by_id(unique_id: String) -> int:
+	for index in data.cats.size():
+		if data.cats[index].unique_id == unique_id:
+			return index + 1
+	return 0
+
+
 func count() -> int:
 	return data.cats.size()
 
@@ -197,6 +204,19 @@ func claim_all_completed() -> Dictionary:
 				messages.append(String(result.message))
 	if messages.is_empty():
 		return _result(false, "수령 가능한 완료 작업이 없습니다.")
+	return _result(true, "\n".join(messages))
+
+
+func claim_completed_by_type(work_type: MinionCatData.WorkType) -> Dictionary:
+	var messages: Array[String] = []
+	for number in range(1, data.cats.size() + 1):
+		var cat := get_by_number(number)
+		if cat and cat.work_type == work_type and cat.is_work_complete():
+			var result := claim_work(number)
+			if result.ok:
+				messages.append(String(result.message))
+	if messages.is_empty():
+		return _result(false, "%s에서 수령 가능한 보상이 없습니다." % MinionCatData.work_type_name(work_type))
 	return _result(true, "\n".join(messages))
 
 
@@ -401,6 +421,7 @@ func _migrate_data() -> void:
 		if not data.items.has(item):
 			data.items[item] = 0
 	for cat in data.cats:
+		cat.ensure_appearance()
 		if not SPECIES.has(cat.species_id):
 			cat.species_id = "basic_cat"
 		if cat.is_work_complete():

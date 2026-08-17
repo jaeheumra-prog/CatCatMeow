@@ -3,6 +3,10 @@ extends Resource
 
 enum WorkType { NONE, FISHING, RAID, BATTLE }
 
+const APPEARANCE_TINTS := [
+	Color("ffffff"), Color("ffe2bd"), Color("d7e1f2"), Color("f2d6cc"), Color("d8f0cf")
+]
+
 ## 필드 노드가 사라져도 남아 있는 동료 고양이 한 마리의 영구 데이터입니다.
 @export var unique_id := ""
 @export var display_name := "동료고양이"
@@ -15,6 +19,9 @@ enum WorkType { NONE, FISHING, RAID, BATTLE }
 @export var portrait_path := "res://assets/characters/bbiyong/bbiyong_lab_sheet.png"
 @export var portrait_region := Rect2(0, 0, 320, 330)
 @export var recruited_at_unix := 0
+@export var appearance_variant := 0
+@export var appearance_tint := Color.WHITE
+@export var appearance_initialized := false
 
 @export_group("성장")
 @export_range(0, 100, 1) var affection := 0
@@ -40,6 +47,7 @@ func initialize_from_enemy(enemy: EnemyCat, roster_number: int, species: Diction
 	species_id = enemy.species_id
 	move_speed = enemy.move_speed
 	recruited_at_unix = int(Time.get_unix_time_from_system())
+	ensure_appearance()
 	_apply_species_stats(species)
 	if enemy.animation_scene:
 		animation_scene_path = enemy.animation_scene.resource_path
@@ -54,6 +62,7 @@ func initialize_debug(species_key: String, roster_number: int, species: Dictiona
 	display_name = "%s %d" % [String(species.get("name", "동료고양이")), roster_number]
 	species_id = species_key
 	recruited_at_unix = int(Time.get_unix_time_from_system())
+	ensure_appearance()
 	_apply_species_stats(species)
 	current_health = max_health
 
@@ -69,6 +78,14 @@ func _apply_species_stats(species: Dictionary) -> void:
 	max_health = int(species.get("health", max_health))
 	portrait_path = String(species.get("portrait", portrait_path))
 	portrait_region = species.get("portrait_region", portrait_region)
+
+
+func ensure_appearance() -> void:
+	if appearance_initialized:
+		return
+	appearance_variant = absi(unique_id.hash()) % APPEARANCE_TINTS.size()
+	appearance_tint = APPEARANCE_TINTS[appearance_variant]
+	appearance_initialized = true
 
 
 func is_working() -> bool:

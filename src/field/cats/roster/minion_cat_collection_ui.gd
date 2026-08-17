@@ -12,11 +12,18 @@ var _refresh_left := 0.0
 @onready var economy_label := %EconomyLabel as Label
 @onready var empty_label := %EmptyLabel as Label
 @onready var detail_label := %DetailLabel as Label
+@onready var feedback_label := %FeedbackLabel as Label
+@onready var fishing_slot := %FishingSlot as MinionCatWorkSlot
+@onready var raid_slot := %RaidSlot as MinionCatWorkSlot
+@onready var battle_slot := %BattleSlot as MinionCatWorkSlot
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	MinionCats.roster_changed.connect(_rebuild)
+	for slot in [fishing_slot, raid_slot, battle_slot]:
+		slot.cat_dropped.connect(_on_cat_dropped)
+		slot.claim_requested.connect(_on_claim_requested)
 	overlay.hide()
 	_rebuild()
 
@@ -31,6 +38,10 @@ func _process(delta: float) -> void:
 	var selected := MinionCats.get_by_id(_selected_id)
 	if selected:
 		_show_detail(selected)
+	for child in grid.get_children():
+		if child is MinionCatCard:
+			child.refresh()
+	_refresh_work_slots(MinionCats.get_all())
 	_update_status_labels()
 
 
@@ -69,11 +80,13 @@ func _rebuild() -> void:
 	if not is_node_ready():
 		return
 	for child in grid.get_children():
+		grid.remove_child(child)
 		child.queue_free()
 	var cats: Array[MinionCatData] = MinionCats.get_all()
 	count_label.text = "보유 고양이  %d" % cats.size()
 	_update_status_labels()
 	empty_label.visible = cats.is_empty()
+	_refresh_work_slots(cats)
 	if cats.is_empty():
 		_selected_id = ""
 		detail_label.text = "아직 영입한 고양이가 없습니다.\n적 고양이를 영입하면 이곳에 개체별로 저장됩니다."
@@ -84,73 +97,12 @@ func _rebuild() -> void:
 	_show_detail(selected if selected else cats[0])
 
 
-func _create_cat_card(cat: MinionCatData) -> Button:
-	var card := Button.new()
-	card.custom_minimum_size = Vector2(245, 320)
-	card.toggle_mode = true
+func _create_cat_card(cat: MinionCatData) -> MinionCatCard:
+	var card := MinionCatCard.new()
+	card.setup(cat)
 	card.button_pressed = cat.unique_id == _selected_id
-	card.set_meta("cat_id", cat.unique_id)
 	card.pressed.connect(_show_detail.bind(cat))
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("202536")
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	style.border_color = Color("6f7892")
-	style.corner_radius_top_left = 12
-	style.corner_radius_top_right = 12
-	style.corner_radius_bottom_left = 12
-	style.corner_radius_bottom_right = 12
-	card.add_theme_stylebox_override("normal", style)
-	var selected_style := style.duplicate() as StyleBoxFlat
-	selected_style.bg_color = Color("303b58")
-	selected_style.border_color = Color("91c8ff")
-	card.add_theme_stylebox_override("hover", selected_style)
-	card.add_theme_stylebox_override("pressed", selected_style)
-
-	var content := VBoxContainer.new()
-	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 12)
-	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(content)
-
-	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(190, 185)
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait.texture = _load_portrait(cat)
-	content.add_child(portrait)
-
-	var name_label := Label.new()
-	name_label.text = cat.display_name
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 24)
-	content.add_child(name_label)
-
-	var summary := Label.new()
-	summary.text = "LV.%d    HP %d/%d" % [cat.level, cat.current_health, cat.max_health]
-	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	content.add_child(summary)
-
-	var work_label := Label.new()
-	work_label.text = _work_state(cat)
-	work_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	work_label.add_theme_color_override("font_color", Color("f4c95d") if cat.is_working() else Color("9aa7bd"))
-	content.add_child(work_label)
 	return card
-
-
-func _load_portrait(cat: MinionCatData) -> Texture2D:
-	var texture := load(cat.portrait_path) as Texture2D
-	if texture == null:
-		return null
-	if cat.portrait_region.size == Vector2.ZERO:
-		return texture
-	var atlas := AtlasTexture.new()
-	atlas.atlas = texture
-	atlas.region = cat.portrait_region
-	return atlas
 
 
 func _show_detail(cat: MinionCatData) -> void:
@@ -174,6 +126,28 @@ func _update_status_labels() -> void:
 	economy_label.text = "참치캔 %d   고등어 %d   연어 %d   명성 %d" % [
 		MinionCats.data.tuna_cans, MinionCats.data.mackerels,
 		MinionCats.data.salmons, MinionCats.data.reputation]
+
+
+func _refresh_work_slots(cats: Array[MinionCatData]) -> void:
+	fishing_slot.refresh(cats, "FISHING" in MinionCats.data.unlocked_work)
+	raid_slot.refresh(cats, "RAID" in MinionCats.data.unlocked_work)
+	battle_slot.refresh(cats, "BATTLE" in MinionCats.data.unlocked_work)
+
+
+func _on_cat_dropped(cat_id: String, work_type: MinionCatData.WorkType) -> void:
+	var number := MinionCats.get_number_by_id(cat_id)
+	var work_key: String = String(MinionCatData.WorkType.keys()[work_type])
+	_show_result(MinionCats.start_work(number, work_key))
+
+
+func _on_claim_requested(work_type: MinionCatData.WorkType) -> void:
+	_show_result(MinionCats.claim_completed_by_type(work_type))
+
+
+func _show_result(result: Dictionary) -> void:
+	feedback_label.text = String(result.get("message", ""))
+	feedback_label.add_theme_color_override(
+		"font_color", Color("8fe3a3") if bool(result.get("ok", false)) else Color("f07b88"))
 
 
 func _work_state(cat: MinionCatData) -> String:

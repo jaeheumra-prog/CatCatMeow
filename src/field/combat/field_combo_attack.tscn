@@ -9,7 +9,6 @@ z_index = 200
 script = ExtResource("1_combo")
 sword_texture = ExtResource("2_ufv8c")
 sword_texture_offset = Vector2(16, 0)
-sword_texture_scale = Vector2(0.04, 0.04)
 
 [node name="SwordPivot" type="Node2D" parent="." unique_id=91592200]
 

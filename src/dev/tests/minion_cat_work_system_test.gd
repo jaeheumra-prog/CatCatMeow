@@ -20,10 +20,25 @@ func _run() -> void:
 	_check(roster.add_debug_cat("fisher_cat").ok, "debug cat could not be added")
 	_check(roster.count() == 1, "cat count did not increase")
 	_check("fisher_cat" in roster.data.unlocked_species, "species was not unlocked")
+	var cat: MinionCatData = roster.get_by_number(1)
+	_check(cat.appearance_initialized, "cat appearance was not initialized")
+	var card := MinionCatCard.new()
+	card.setup(cat)
+	add_child(card)
+	await get_tree().process_frame
+	_check(card.cat_data == cat, "card does not reference the roster cat object")
+	_check(card.get_meta("cat_id", "") == cat.unique_id, "card object id did not match")
+	_check(card._portrait.texture != null, "card did not load the cat portrait")
+	_check(card._portrait.modulate == cat.appearance_tint, "card did not reflect the cat appearance tint")
+	var drag_data: Dictionary = card.make_drag_payload()
+	_check(drag_data.get("cat_id", "") == cat.unique_id, "drag data lost the cat object id")
+	_check(drag_data.get("species_id", "") == cat.species_id, "drag data lost the cat species")
+	_check(drag_data.get("appearance_variant", -1) == cat.appearance_variant, "drag data lost the appearance variant")
+	card.queue_free()
+	await get_tree().process_frame
 
 	var start_result: Dictionary = roster.start_work(1, "FISHING", 1)
 	_check(start_result.ok, "fishing did not start")
-	var cat: MinionCatData = roster.get_by_number(1)
 	cat.work_ends_unix = int(Time.get_unix_time_from_system()) - 1
 	var claim_result: Dictionary = roster.claim_work(1)
 	_check(claim_result.ok, "completed fishing reward could not be claimed")
