@@ -1,5 +1,9 @@
 extends Node2D
 
+const MINION_FOLLOW_CONTROLLER_SCRIPT := preload(
+	"res://src/field/cats/minion_follow_controller.gd"
+)
+
 #네임테그 / nametag / NAMETAGE
 const ENEMY_CAT_NAME_COLOR := Color("#ff4d4d")
 const MINION_CAT_NAME_COLOR := Color("#4d9dff")
@@ -95,7 +99,7 @@ func _ready() -> void:
 	_create_preview_objects()
 
 	_spawn_player()
-
+	_spawn_active_minion()
 	_spawn_test_enemy_cat()
 	_camera.make_current()
 	queue_redraw()
@@ -193,6 +197,13 @@ func _on_enemy_cat_recruit_requested(enemy) -> void:
 		minion.field_health.max_health = old_max_health
 		minion.field_health.set_health(old_health_value)
 	MinionCats.bind_runtime_minion(minion)
+	if MinionCats.is_active_minion(
+		minion_data
+	):
+		_attach_minion_ai(
+			minion,
+			minion_data
+		)
 
 	# GRLAB 삐용 그래픽을 임시 사용 중이므로 같은 비율 적용
 	_apply_gamepiece_visual_scale(minion)
@@ -807,3 +818,171 @@ func _add_cat_name_label(
 	# 자식으로 추가한 다음 이름표의 중심 위치와 크기를 확정한다.
 	label.set_deferred("size", Vector2(120.0, 26.0))
 	label.set_deferred("position", Vector2(-60.0, -13.0))
+
+
+func _spawn_active_minion() -> void:
+	var data := MinionCats.get_active_minion()
+
+	if data == null:
+		print("ACTIVE MINION : NONE")
+		return
+
+
+	var spawn_cell := _find_minion_spawn_cell()
+
+	if spawn_cell == Gameboard.INVALID_CELL:
+		push_warning(
+			"출전 MinionCat을 생성할 빈 셀이 없습니다."
+		)
+		return
+
+
+	var minion := (
+		MINION_CAT_SCENE.instantiate()
+		as MinionCat
+	)
+
+	if minion == null:
+		return
+
+
+	minion.name = (
+		"MinionCat_%s"
+		% data.unique_id
+	)
+
+	minion.minion_id = data.unique_id
+	minion.display_name = data.display_name
+
+	minion.position = Gameboard.cell_to_pixel(
+		spawn_cell
+	)
+
+	minion.move_speed = data.move_speed
+	minion.z_index = 100
+
+
+	add_child(minion)
+
+
+	# 저장된 외형
+	if not data.animation_scene_path.is_empty():
+
+		var animation_scene := load(
+			data.animation_scene_path
+		) as PackedScene
+
+		if animation_scene:
+			minion.animation_scene = animation_scene
+
+	else:
+		minion.animation_scene = (
+			PLAYER_ANIMATION_SCENE
+		)
+
+
+	if minion.field_health:
+		minion.field_health.max_health = (
+			data.max_health
+		)
+
+		minion.field_health.set_health(
+			data.current_health
+		)
+
+
+	MinionCats.bind_runtime_minion(
+		minion
+	)
+
+	_apply_gamepiece_visual_scale(
+		minion
+	)
+
+	_add_cat_name_label(
+		minion,
+		data.display_name,
+		MINION_CAT_NAME_COLOR
+	)
+
+	_attach_minion_ai(
+		minion,
+		data
+	)
+
+
+	print(
+		"ACTIVE MINION SPAWNED : ",
+		data.display_name
+	)
+
+
+func _find_minion_spawn_cell() -> Vector2i:
+	var player_cell := GamepieceRegistry.get_cell(
+		_player
+	)
+
+	if player_cell == Gameboard.INVALID_CELL:
+		return Gameboard.INVALID_CELL
+
+
+	var offsets: Array[Vector2i] = [
+		Vector2i.LEFT,
+		Vector2i.RIGHT,
+		Vector2i.UP,
+		Vector2i.DOWN,
+
+		Vector2i(-2, 0),
+		Vector2i(2, 0),
+		Vector2i(0, -2),
+		Vector2i(0, 2),
+	]
+
+
+	for offset in offsets:
+
+		var cell := player_cell + offset
+
+		if not _walkable_cells.has(cell):
+			continue
+
+		if (
+			GamepieceRegistry.get_gamepiece(cell)
+			!= null
+		):
+			continue
+
+		return cell
+
+
+	return Gameboard.INVALID_CELL
+
+func _attach_minion_ai(
+	minion: MinionCat,
+	data: MinionCatData
+) -> void:
+
+	if minion == null:
+		return
+
+
+	var controller := (
+		MINION_FOLLOW_CONTROLLER_SCRIPT.new()
+		as MinionFollowController
+	)
+
+
+	# 4순위에서 이 부분을 훨씬 강화 예정
+	controller.attack_damage = maxi(
+		data.combat_power,
+		1
+	)
+
+	controller.attack_cooldown = maxf(
+		0.35,
+		0.95 - float(data.agility) * 0.06
+	)
+
+	minion.add_child(
+		controller
+	)

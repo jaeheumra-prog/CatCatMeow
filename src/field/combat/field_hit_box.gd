@@ -22,7 +22,6 @@ func _ready() -> void:
 	if health == null:
 		push_error("FieldHitBox '%s' could not find FieldHealth at '%s'." % [name, health_path])
 
-	area_entered.connect(_on_area_entered)
 	_apply_active_state()
 
 
@@ -42,12 +41,6 @@ func receive_damage(source: FieldDamageSource) -> int:
 	source.confirm_hit(self, applied_damage)
 	damage_received.emit(source, applied_damage)
 	return applied_damage
-
-
-func _on_area_entered(area: Area2D) -> void:
-	var source := area as FieldDamageSource
-	if source != null:
-		receive_damage(source)
 
 
 func _apply_active_state() -> void:

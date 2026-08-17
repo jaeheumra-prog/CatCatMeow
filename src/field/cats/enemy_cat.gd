@@ -31,6 +31,11 @@ var state: State=State.NEUTRAL
 )
 
 func _ready() -> void:
+	# EnemyCat overrides Gamepiece._ready(), so explicitly retain the base
+	# registration and idle-processing setup.
+	super._ready()
+	if is_queued_for_deletion():
+		return
 	field_health.health_changed.connect(
 		_on_health_changed #왜 오류? 1
 	)
@@ -50,7 +55,7 @@ func _ready() -> void:
 	
 func receive_field_damage(
 	damage:int,
-	sourvce:Node=null
+	source:Node=null
 )->void:
 	if state == State.RECRUITED:
 		return
@@ -61,7 +66,7 @@ func receive_field_damage(
 		
 	field_health.take_damage(
 		damage,
-		source 
+		source
 	)
 		
 func is_combat_target() -> bool:

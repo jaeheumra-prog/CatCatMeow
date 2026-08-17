@@ -134,13 +134,14 @@ func _show_detail(cat: MinionCatData) -> void:
 	if cat == null:
 		return
 	_selected_id = cat.unique_id
-	detail_label.text = (
+	var detail_format := (
 		"[ %s ]\n\n종류  %s\n레벨  %d   EXP %d/%d\n체력  %d / %d\n호감도  %d / 100\n\n"
 		+ "전투력  %d\n민첩  %d\n체력  %d\n친화력  %d\n손재주  %d\n\n작업  %s\n\n개체 ID\n%s"
-		% [cat.display_name, cat.species_id, cat.level, cat.experience, cat.level * 30,
-			cat.current_health, cat.max_health, cat.affection, cat.combat_power, cat.agility,
-			cat.stamina, cat.friendliness, cat.dexterity, _work_state(cat), cat.unique_id]
 	)
+	detail_label.text = detail_format % [
+		cat.display_name, cat.species_id, cat.level, cat.experience, cat.level * 30,
+		cat.current_health, cat.max_health, cat.affection, cat.combat_power, cat.agility,
+		cat.stamina, cat.friendliness, cat.dexterity, _work_state(cat), cat.unique_id]
 	for child in grid.get_children():
 		if child is Button:
 			child.button_pressed = String(child.get_meta("cat_id", "")) == cat.unique_id

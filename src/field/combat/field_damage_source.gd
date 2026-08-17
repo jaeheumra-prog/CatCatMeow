@@ -23,6 +23,7 @@ var _hit_targets: Dictionary[int, bool] = {}
 
 
 func _ready() -> void:
+	area_entered.connect(_on_area_entered)
 	_apply_active_state()
 
 
@@ -46,6 +47,12 @@ func confirm_hit(hit_box: FieldHitBox, applied_damage: int) -> void:
 
 func get_damage_owner() -> Node:
 	return source_actor if is_instance_valid(source_actor) else self
+
+
+func _on_area_entered(area: Area2D) -> void:
+	var hit_box := area as FieldHitBox
+	if hit_box != null:
+		hit_box.receive_damage(self)
 
 
 func _apply_active_state() -> void:

@@ -1,15 +1,15 @@
-extends SceneTree
+extends Node
 
 var _failed := false
 
 
-func _initialize() -> void:
+func _ready() -> void:
 	_run.call_deferred()
 
 
 func _run() -> void:
 	var stage := Node2D.new()
-	root.add_child(stage)
+	get_tree().root.add_child(stage)
 
 	var target := Node2D.new()
 	stage.add_child(target)
@@ -43,8 +43,8 @@ func _run() -> void:
 	stage.add_child(source)
 	source.set_active(true)
 
-	await physics_frame
-	await physics_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	_check(health.health == 6, "overlap should deal exactly 4 damage")
 
 	_check(hit_box.receive_damage(source) == 0, "one activation must not hit twice")
@@ -66,7 +66,10 @@ func _run() -> void:
 	_check(hit_box.receive_damage(friendly_source) == 0, "same-team damage should be ignored")
 	_check(health.health == 10, "friendly fire changed health")
 
-	quit(1 if _failed else 0)
+	print("FIELD COMBAT SMOKE TEST PASSED" if not _failed else "FIELD COMBAT SMOKE TEST FAILED")
+	stage.queue_free()
+	await get_tree().process_frame
+	get_tree().quit(1 if _failed else 0)
 
 
 func _check(condition: bool, message: String) -> void:
