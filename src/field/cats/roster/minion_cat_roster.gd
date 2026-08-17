@@ -82,6 +82,9 @@ func register_from_enemy(enemy: EnemyCat) -> MinionCatData:
 	cat.initialize_from_enemy(enemy, data.cats.size() + 1, SPECIES[species_key])
 	cat.species_id = species_key
 	data.cats.append(cat)
+	if data.active_minion_id.is_empty():
+		data.active_minion_id=cat.unique_id
+		
 	unlock_species(species_key, false)
 	_save_and_emit()
 	cat_recruited.emit(cat)
@@ -127,7 +130,73 @@ func get_number_by_id(unique_id: String) -> int:
 
 func count() -> int:
 	return data.cats.size()
+	
+#minioncat 출전 선택 기능
+func get_active_minion() -> MinionCatData:
+	if data.active_minion_id.is_empty():
+		return null
+	
+	var cat := get_by_id(data.active_minion_id)
+	
+	if cat == null:
+		return null
+	return cat
+func is_active_minion(cat: MinionCatData) -> bool:
+	if cat == null:
+		return false
 
+	return data.active_minion_id == cat.unique_id
+
+
+func set_active_minion(number: int) -> Dictionary:
+	var cat := get_by_number(number)
+
+	if cat == null:
+		return _result(
+			false,
+			"고양이 번호를 확인하라냥: %d" % number
+		)
+
+	return set_active_minion_by_id(cat.unique_id)
+
+
+func set_active_minion_by_id(unique_id: String) -> Dictionary:
+	var cat := get_by_id(unique_id)
+
+	if cat == null:
+		return _result(
+			false,
+			"존재하지 않는 고양이다냥."
+		)
+
+	if cat.is_working():
+		return _result(
+			false,
+			"%s은(는) 작업 중이라 출전할 수 없다냥."
+			% cat.display_name
+		)
+
+	# 같은 고양이를 다시 선택하면 출전 해제
+	if data.active_minion_id == unique_id:
+		data.active_minion_id = ""
+
+		_save_and_emit()
+
+		return _result(
+			true,
+			"%s의 출전을 해제했습니다."
+			% cat.display_name
+		)
+
+	data.active_minion_id = unique_id
+
+	_save_and_emit()
+
+	return _result(
+		true,
+		"%s을(를) 출전 고양이로 지정했습니다."
+		% cat.display_name
+	)
 
 func unlock_species(species_key: String, notify := true) -> Dictionary:
 	species_key = species_key.to_lower()
@@ -156,7 +225,16 @@ func unlock_work(work_name: String) -> Dictionary:
 func start_work(number: int, work_name: String, debug_seconds := -1) -> Dictionary:
 	var cat := get_by_number(number)
 	if cat == null:
-		return _result(false, "고양이 번호를 확인하세요: %d" % number)
+		return _result(false, "고양이 번호를 확인하라냥: %d" % number)
+		
+	#출전 중인지 먼저 체크
+	if is_active_minion(cat):
+		return _result(
+			false,
+			"%s은(는)  현재 출전 중이다냥"
+			% cat.display_name
+		)
+	
 	if cat.is_working():
 		return _result(false, "%s은(는) 이미 %s 중입니다." % [cat.display_name, cat.get_work_name()])
 	var work_type := MinionCatData.parse_work_type(work_name)
@@ -180,10 +258,18 @@ func claim_work(number: int) -> Dictionary:
 	var cat := get_by_number(number)
 	if cat == null:
 		return _result(false, "고양이 번호를 확인하세요: %d" % number)
+		
+	if is_active_minion(cat):
+		return _result(
+			false,
+			"%s은(는) 현재 출전 중이다냥"
+			% cat.display_name
+		)	
+		
 	if not cat.is_working():
-		return _result(false, "%s은(는) 수행 중인 작업이 없습니다." % cat.display_name)
+		return _result(false, "%s은(는) 수행 중인 작업이 없다냥." % cat.display_name)
 	if not cat.is_work_complete():
-		return _result(false, "아직 %s 남았습니다." % _format_duration(cat.remaining_work_seconds()))
+		return _result(false, "아직 %s 남았다냥." % _format_duration(cat.remaining_work_seconds()))
 	var message := _grant_work_reward(cat)
 	cat.experience += 10
 	while cat.experience >= cat.level * 30:

@@ -60,6 +60,31 @@ func _input(event: InputEvent) -> void:
 	elif _is_open and key_event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
 		set_open(false)
+		
+	elif _is_open and key_event.keycode == KEY_ENTER:
+		get_viewport().set_input_as_handled()
+		_toggle_selected_active()
+		
+func _toggle_selected_active() -> void:
+	if _selected_id.is_empty():
+		_show_result({
+			"ok":false,
+			"message": "선택"
+		})
+		return
+		
+	var result := MinionCats.set_active_minion_by_id(
+		_selected_id
+	)
+	
+	_show_result(result)
+	
+	var selected := MinionCats.get_by_id(
+		_selected_id
+	)
+	
+	if selected:
+		_show_detail(selected)
 
 
 func set_open(value: bool) -> void:
@@ -119,6 +144,22 @@ func _show_detail(cat: MinionCatData) -> void:
 	for child in grid.get_children():
 		if child is Button:
 			child.button_pressed = String(child.get_meta("cat_id", "")) == cat.unique_id
+			
+	var deployment_state := (
+		"출전 중"
+		if MinionCats.is_active_minion(cat)
+		else "대기"
+	)
+	
+	
+	detail_label.text += (
+		"\n\n필드 상태: %s"
+		%deployment_state
+	)
+	
+	detail_label.text += (
+		"\n [ENTER] 출전 지정 / 해제 "
+	)
 
 
 func _update_status_labels() -> void:
