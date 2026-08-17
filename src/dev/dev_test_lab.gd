@@ -147,6 +147,11 @@ func _on_enemy_cat_recruit_requested(enemy) -> void:
 	var old_field_health := enemy.get_node_or_null("FieldHealth") as FieldHealth
 	var old_health_value := old_field_health.health if old_field_health != null else 6
 	var old_max_health := old_field_health.max_health if old_field_health != null else 6
+	# 필드 노드와 별개인 영구 개체 데이터를 먼저 보유 목록에 저장한다.
+	var minion_data: MinionCatData = MinionCats.register_from_enemy(enemy)
+	if minion_data == null:
+		push_error("Recruit: MinionCat 데이터 저장 실패")
+		return
 
 	print(
 		"ENEMY -> MINION | cell = ",
@@ -173,7 +178,9 @@ func _on_enemy_cat_recruit_requested(enemy) -> void:
 		push_error("MinionCat 생성 실패")
 		return
 
-	minion.name = "TestMinionCat"
+	minion.name = "MinionCat_%s" % minion_data.unique_id
+	minion.minion_id = minion_data.unique_id
+	minion.display_name = minion_data.display_name
 	minion.position = Gameboard.cell_to_pixel(enemy_cell)
 	minion.move_speed = old_move_speed
 	minion.z_index = old_z_index
@@ -185,12 +192,13 @@ func _on_enemy_cat_recruit_requested(enemy) -> void:
 	if minion.field_health != null:
 		minion.field_health.max_health = old_max_health
 		minion.field_health.set_health(old_health_value)
+	MinionCats.bind_runtime_minion(minion)
 
 	# GRLAB 삐용 그래픽을 임시 사용 중이므로 같은 비율 적용
 	_apply_gamepiece_visual_scale(minion)
 	_add_cat_name_label(
 		minion,
-		"동료고양이",
+		minion_data.display_name,
 		MINION_CAT_NAME_COLOR
 	)
 

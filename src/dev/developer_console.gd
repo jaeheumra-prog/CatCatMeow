@@ -84,7 +84,9 @@ func go_to_minigame3() -> void:
 
 
 func _on_command_submitted(raw_command: String) -> void:
-	var command := raw_command.strip_edges().to_upper()
+	var parts := raw_command.strip_edges().split(" ", false)
+	var command := parts[0].to_upper() if not parts.is_empty() else ""
+	var args := parts.slice(1)
 	_command_input.clear()
 
 	if command.is_empty():
@@ -92,6 +94,41 @@ func _on_command_submitted(raw_command: String) -> void:
 
 	_history.append_text("[color=#f6c177]> %s[/color]\n" % command)
 	match command:
+		"CATROOM", "CATS":
+			_open_cat_room.call_deferred()
+		"CATLIST":
+			_write_system_message(MinionCats.get_roster_summary())
+		"CATCODEX":
+			_write_system_message(MinionCats.get_codex_summary())
+		"CATITEMS":
+			_write_system_message(MinionCats.get_economy_summary())
+		"CATSTATUS":
+			_write_system_message(MinionCats.get_cat_summary(_int_arg(args, 0)))
+		"CATADD":
+			_write_result(MinionCats.add_debug_cat(_string_arg(args, 0, "basic_cat")))
+		"CATUNLOCK":
+			_write_result(MinionCats.unlock_species(_string_arg(args, 0)))
+		"CATWORKUNLOCK":
+			_write_result(MinionCats.unlock_work(_string_arg(args, 0)))
+		"CATWORK":
+			_write_result(MinionCats.start_work(
+				_int_arg(args, 0), _string_arg(args, 1), _int_arg(args, 2, -1)))
+		"CATCLAIM":
+			if _string_arg(args, 0).to_upper() == "ALL":
+				_write_result(MinionCats.claim_all_completed())
+			else:
+				_write_result(MinionCats.claim_work(_int_arg(args, 0)))
+		"CATGIFT":
+			_write_result(MinionCats.give_item(
+				_int_arg(args, 0), _string_arg(args, 1, "catnip")))
+		"CATTRAIN":
+			_write_result(MinionCats.give_item(
+				_int_arg(args, 0), "training_treat", _string_arg(args, 1)))
+		"CATGIVEITEM":
+			_write_result(MinionCats.debug_give_item(
+				_string_arg(args, 0), _int_arg(args, 1, 1)))
+		"CATHELP":
+			_write_system_message(_cat_help_text())
 		"BOSS":
 			_write_system_message("보스 전투 공간으로 이동합니다.")
 			go_to_boss()
@@ -109,6 +146,8 @@ func _on_command_submitted(raw_command: String) -> void:
 				+ "MINIGAME1  생선 받아먹기\n"
 				+ "MINIGAME2  두더지 잡기\n"
 				+ "MINIGAME3  삐용 러너\n"
+				+ "CATROOM    MinionCat 관리 화면\n"
+				+ "CATHELP    고양이 시스템 명령어\n"
 				+ "CLEAR      콘솔 기록 지우기"
 			)
 		"CLEAR":
@@ -125,7 +164,44 @@ func _on_command_submitted(raw_command: String) -> void:
 		_:
 			_write_system_message("알 수 없는 명령어: %s (HELP를 입력하세요.)" % command)
 
-	_command_input.grab_focus()
+	if _is_open:
+		_command_input.grab_focus()
+
+
+func _open_cat_room() -> void:
+	if _is_open:
+		set_console_open(false)
+	MinionCatCollectionUI.set_open(true)
+
+
+func _write_result(result: Dictionary) -> void:
+	var color := "#9ccfd8" if bool(result.get("ok", false)) else "#eb6f92"
+	_history.append_text("[color=%s]%s[/color]\n" % [color, String(result.get("message", ""))])
+	_history.scroll_to_line(maxi(0, _history.get_line_count() - 1))
+
+
+func _string_arg(args: PackedStringArray, index: int, fallback := "") -> String:
+	return args[index] if index >= 0 and index < args.size() else fallback
+
+
+func _int_arg(args: PackedStringArray, index: int, fallback := 0) -> int:
+	var value := _string_arg(args, index)
+	return value.to_int() if value.is_valid_int() else fallback
+
+
+func _cat_help_text() -> String:
+	return (
+		"CATROOM                         관리 화면 열기\n"
+		+ "CATLIST                         보유 고양이 목록\n"
+		+ "CATSTATUS <번호>                개체 상세 정보\n"
+		+ "CATCODEX                        종 도감\n"
+		+ "CATITEMS                        재화/아이템/작업 해금 확인\n"
+		+ "CATWORK <번호> <작업> [초]      작업 시작 (FISHING/RAID/BATTLE)\n"
+		+ "CATCLAIM <번호|ALL>             완료 보상 수령\n"
+		+ "CATGIFT <번호> CATNIP           호감도 상승\n"
+		+ "CATTRAIN <번호> <스탯>          훈련간식으로 스탯 상승\n"
+		+ "개발 시험: CATADD <종>, CATUNLOCK <종>, CATWORKUNLOCK <작업>, CATGIVEITEM <아이템> [수량]"
+	)
 
 
 func _request_scene_change(scene_path: String) -> void:

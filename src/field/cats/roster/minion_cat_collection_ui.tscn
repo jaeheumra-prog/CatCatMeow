@@ -1,0 +1,157 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/field/cats/roster/minion_cat_collection_ui.gd" id="1_ui"]
+
+[sub_resource type="StyleBoxFlat" id="Panel_main"]
+bg_color = Color(0.055, 0.065, 0.095, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.52, 0.61, 0.78, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[node name="MinionCatCollectionUI" type="CanvasLayer"]
+layer = 105
+script = ExtResource("1_ui")
+
+[node name="Overlay" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.012, 0.02, 0.84)
+
+[node name="Panel" type="PanelContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.07
+anchor_top = 0.08
+anchor_right = 0.93
+anchor_bottom = 0.92
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Panel_main")
+
+[node name="Margin" type="MarginContainer" parent="Overlay/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 24
+
+[node name="MainVBox" type="VBoxContainer" parent="Overlay/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Header" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Overlay/Panel/Margin/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 38
+text = "MINION CAT COLLECTION"
+
+[node name="CountLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "보유 고양이  0"
+
+[node name="CloseHint" type="Label" parent="Overlay/Panel/Margin/MainVBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 22
+text = "   [ 1 / ESC 닫기 ]"
+
+[node name="StatusRow" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
+layout_mode = 2
+
+[node name="SpeciesLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.57, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "도감  1 / 5"
+
+[node name="EconomyLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.96, 0.8, 0.38, 1)
+theme_override_font_sizes/font_size = 22
+text = "참치캔 0   고등어 0   연어 0   명성 0"
+horizontal_alignment = 2
+
+[node name="Body" type="HSplitContainer" parent="Overlay/Panel/Margin/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 1180
+
+[node name="RosterArea" type="Control" parent="Overlay/Panel/Margin/MainVBox/Body"]
+custom_minimum_size = Vector2(1120, 0)
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Overlay/Panel/Margin/MainVBox/Body/RosterArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CatGrid" type="GridContainer" parent="Overlay/Panel/Margin/MainVBox/Body/RosterArea/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 18
+theme_override_constants/v_separation = 18
+columns = 4
+
+[node name="EmptyLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/Body/RosterArea"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.66, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 28
+text = "아직 영입한 고양이가 없습니다."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DetailPanel" type="PanelContainer" parent="Overlay/Panel/Margin/MainVBox/Body"]
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 2
+
+[node name="DetailLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/Body/DetailPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "고양이 카드를 선택하세요."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="CommandHint" type="Label" parent="Overlay/Panel/Margin/MainVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.72, 0.82, 1)
+theme_override_font_sizes/font_size = 19
+text = "콘솔 명령: CATLIST · CATSTATUS 번호 · CATWORK 번호 FISHING · CATCLAIM 번호 · CATHELP"
+horizontal_alignment = 1

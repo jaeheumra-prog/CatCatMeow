@@ -6,6 +6,7 @@ signal recruit_requested(enemy)
 
 
 var is_recruited: bool = false
+@export var species_id := "basic_cat"
 
 @onready var field_health := $FieldHealth as FieldHealth
 
