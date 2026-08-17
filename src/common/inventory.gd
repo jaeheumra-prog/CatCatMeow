@@ -2,6 +2,9 @@
 ## A simple inventory implementation that includes all item types and data within the class.
 class_name Inventory extends Resource
 
+const SavePathDefinitions = preload("res://src/data/save_paths.gd")
+const SaveIO = preload("res://src/data/save_manager.gd")
+
 ## All item types available to add or remove from the inventory.
 enum ItemTypes { KEY, COIN, BOMB, RED_WAND, BLUE_WAND, GREEN_WAND }
 
@@ -17,8 +20,6 @@ const ICONS: = {
 	ItemTypes.BLUE_WAND: preload("res://assets/items/wand_blue.atlastex"),
 	ItemTypes.GREEN_WAND: preload("res://assets/items/wand_green.atlastex"),
 }
-
-const INVENTORY_PATH: = "user://inventory.tres"
 
 ## Emitted when the count of a given item type changes.
 signal item_changed(type: ItemTypes)
@@ -37,11 +38,14 @@ func _init() -> void:
 static func restore() -> Inventory:
 	if Engine.is_editor_hint():
 		return null
-	
-	if FileAccess.file_exists(INVENTORY_PATH):
-		var inventory = ResourceLoader.load(INVENTORY_PATH) as Inventory
+
+	var save_path := _get_save_path()
+	if FileAccess.file_exists(save_path):
+		var inventory := SaveIO.load_resource(save_path, ResourceLoader.CACHE_MODE_REUSE) as Inventory
 		if inventory:
 			return inventory
+		push_error("Inventory 저장 파일을 읽지 못해 덮어쓰지 않고 빈 데이터로 실행합니다: %s" % save_path)
+		return Inventory.new()
 	
 	# Either there is no inventory associated with this profile or the file itself could not be
 	# loaded. Either way, a new inventory resource must be created.
@@ -79,4 +83,19 @@ static func get_item_icon(item_type: ItemTypes) -> Texture:
 
 ## Write the inventory contents to the disk.
 func save() -> void:
-	ResourceSaver.save(self, INVENTORY_PATH)
+	var error := SaveIO.save_resource(self, _get_save_path())
+	if error != OK:
+		push_error("Inventory 저장 실패: %d" % error)
+
+
+static func _get_save_path() -> String:
+	var save_path := SavePathDefinitions.get_inventory_path()
+	if SavePathDefinitions.is_development_build():
+		var migration_error := SaveIO.migrate_legacy_save(
+			SavePathDefinitions.LEGACY_INVENTORY,
+			save_path,
+			SavePathDefinitions.LEGACY_INVENTORY_BACKUP
+		)
+		if migration_error != OK:
+			push_error("Inventory 기존 개발 저장 이전 실패: %d" % migration_error)
+	return save_path

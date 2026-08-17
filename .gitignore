@@ -25,3 +25,15 @@ mono_crash.*.json
 # Godot editor recovery/temp files and local test output
 *.tmp
 *.log
+
+# Never commit runtime/player save data copied into the repository.
+/save/
+/saves/
+/user_data/
+/dev_data/
+/test_output/
+*.save
+*.sav
+*.runtime.tres
+*.playersave.tres
+*.devsave.tres

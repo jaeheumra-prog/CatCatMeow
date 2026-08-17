@@ -1,13 +1,13 @@
 extends Node
 
 const SpeciesDatabase = preload("res://src/field/cats/roster/minion_cat_species_database.gd")
+const SavePathDefinitions = preload("res://src/data/save_paths.gd")
+const SaveIO = preload("res://src/data/save_manager.gd")
 
 signal roster_changed
 signal cat_recruited(cat: MinionCatData)
 signal work_completed(cat: MinionCatData)
 
-const DEFAULT_SAVE_PATH := "user://minion_cat_roster.tres"
-const MIGRATION_BACKUP_PATH := "user://minion_cat_roster.pre_species_migration.tres"
 const DEFAULT_WORK_SECONDS := {
 	MinionCatData.WorkType.FISHING: 20 * 60,
 	MinionCatData.WorkType.RAID: 30 * 60,
@@ -15,12 +15,13 @@ const DEFAULT_WORK_SECONDS := {
 }
 const SPECIES: Dictionary = SpeciesDatabase.SPECIES
 
-var save_path := DEFAULT_SAVE_PATH
+var save_path := ""
 var data: MinionCatRosterData
 var _completion_poll := 0.0
 
 
 func _ready() -> void:
+	_prepare_save_path()
 	_restore()
 	set_process(true)
 
@@ -492,9 +493,24 @@ func _on_runtime_health_changed(current: int, _previous: int, maximum: int, uniq
 	_save_and_emit()
 
 
+func _prepare_save_path() -> void:
+	if not save_path.is_empty():
+		return
+	save_path = SavePathDefinitions.get_roster_path()
+	if not SavePathDefinitions.is_development_build():
+		return
+	var migration_error := SaveIO.migrate_legacy_save(
+		SavePathDefinitions.LEGACY_ROSTER,
+		save_path,
+		SavePathDefinitions.LEGACY_ROSTER_BACKUP
+	)
+	if migration_error != OK:
+		push_error("MinionCatRoster 기존 개발 저장 이전 실패: %d" % migration_error)
+
+
 func _restore() -> void:
 	if FileAccess.file_exists(save_path):
-		var loaded := ResourceLoader.load(save_path, "", ResourceLoader.CACHE_MODE_IGNORE) as MinionCatRosterData
+		var loaded := SaveIO.load_resource(save_path) as MinionCatRosterData
 		if loaded:
 			data = loaded
 			_create_migration_backup()
@@ -511,12 +527,11 @@ func _restore() -> void:
 
 
 func _create_migration_backup() -> void:
-	if save_path != DEFAULT_SAVE_PATH or FileAccess.file_exists(MIGRATION_BACKUP_PATH):
+	if save_path != SavePathDefinitions.get_roster_path():
 		return
-	var source := ProjectSettings.globalize_path(save_path)
-	var destination := ProjectSettings.globalize_path(MIGRATION_BACKUP_PATH)
-	var error := DirAccess.copy_absolute(source, destination)
-	if error != OK:
+	var backup_path := "%s.pre_species_migration.tres" % save_path.get_basename()
+	var error := SaveIO.copy_if_absent(save_path, backup_path)
+	if error != OK and error != ERR_FILE_NOT_FOUND:
 		push_warning("MinionCatRoster 마이그레이션 백업 생성 실패: %d" % error)
 
 
@@ -553,7 +568,7 @@ func _save_and_emit() -> void:
 
 
 func _save() -> void:
-	var error := ResourceSaver.save(data, save_path)
+	var error := SaveIO.save_resource(data, save_path)
 	if error != OK:
 		push_error("MinionCatRoster 저장 실패: %d" % error)
 

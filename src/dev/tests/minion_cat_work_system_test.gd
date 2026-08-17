@@ -1,10 +1,12 @@
 extends Node
 
-const TEST_SAVE := "user://minion_cat_work_system_test.tres"
 const ROSTER_SCRIPT := preload("res://src/field/cats/roster/minion_cat_roster.gd")
 const SPECIES_DATABASE := preload("res://src/field/cats/roster/minion_cat_species_database.gd")
+const SAVE_PATHS := preload("res://src/data/save_paths.gd")
+const SAVE_IO := preload("res://src/data/save_manager.gd")
 
 var _failed := false
+var _test_save := SAVE_PATHS.get_test_path("minion_cat_work_system_test.tres")
 
 
 func _ready() -> void:
@@ -12,9 +14,16 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SAVE))
+	_check(_test_save.begins_with("user://tests/"), "automated test save escaped the tests directory")
+	_check(SAVE_PATHS.DEV_ROSTER != SAVE_PATHS.RELEASE_ROSTER, "debug and release roster paths are identical")
+	_check(SAVE_PATHS.LEGACY_ROSTER != SAVE_PATHS.DEV_ROSTER, "legacy and debug roster paths are identical")
+	_check(SAVE_PATHS.RELEASE_ROSTER.begins_with("user://saves/slot_01/"), "release save escaped its slot")
+	if SAVE_PATHS.is_development_build():
+		_check(SAVE_PATHS.get_roster_path() == SAVE_PATHS.DEV_ROSTER, "debug build selected the release save")
+	_test_legacy_migration()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(_test_save))
 	var roster = ROSTER_SCRIPT.new()
-	roster.save_path = TEST_SAVE
+	roster.save_path = _test_save
 	add_child(roster)
 
 	_check(roster.count() == 0, "new test roster was not empty")
@@ -77,14 +86,50 @@ func _run() -> void:
 	_check(roster.give_item(1, "training_treat", "DEXTERITY").ok, "training failed")
 	_check(cat.dexterity == old_dexterity + 1, "training did not increase stat")
 
-	var loaded := ResourceLoader.load(TEST_SAVE, "", ResourceLoader.CACHE_MODE_IGNORE) as MinionCatRosterData
+	var loaded := ResourceLoader.load(_test_save, "", ResourceLoader.CACHE_MODE_IGNORE) as MinionCatRosterData
 	_check(loaded != null and loaded.cats.size() == 1, "roster did not persist")
 
 	roster.queue_free()
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SAVE))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(_test_save))
 	if not _failed:
 		print("MINION CAT WORK SYSTEM TEST PASSED")
 	get_tree().quit(1 if _failed else 0)
+
+
+func _test_legacy_migration() -> void:
+	var source := SAVE_PATHS.TEST_ROOT.path_join("legacy_roster_source.tres")
+	var destination := SAVE_PATHS.TEST_ROOT.path_join("dev_roster_destination.tres")
+	var backup := SAVE_PATHS.TEST_ROOT.path_join("legacy_roster_backup.tres")
+	for path in [source, destination, backup]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+	var legacy_data := MinionCatRosterData.new()
+	legacy_data.reputation = 17
+	_check(SAVE_IO.save_resource(legacy_data, source) == OK, "legacy fixture could not be saved")
+	_check(SAVE_IO.migrate_legacy_save(source, destination, backup) == OK, "legacy save migration failed")
+	_check(FileAccess.file_exists(source), "legacy save was deleted during migration")
+	_check(FileAccess.file_exists(backup), "legacy migration backup was not created")
+	var migrated := SAVE_IO.load_resource(destination) as MinionCatRosterData
+	_check(migrated != null and migrated.reputation == 17, "migrated save data changed")
+
+	legacy_data.reputation = 99
+	SAVE_IO.save_resource(legacy_data, source)
+	_check(SAVE_IO.migrate_legacy_save(source, destination, backup) == OK, "repeat migration returned an error")
+	migrated = SAVE_IO.load_resource(destination) as MinionCatRosterData
+	_check(migrated != null and migrated.reputation == 17, "existing destination was overwritten")
+
+	var inventory_path := SAVE_PATHS.TEST_ROOT.path_join("inventory_cache_test.tres")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(inventory_path))
+	var inventory := Inventory.new()
+	inventory.add(Inventory.ItemTypes.COIN, 3)
+	_check(SAVE_IO.save_resource(inventory, inventory_path) == OK, "inventory fixture could not be saved")
+	var inventory_a := SAVE_IO.load_resource(inventory_path, ResourceLoader.CACHE_MODE_REUSE) as Inventory
+	var inventory_b := SAVE_IO.load_resource(inventory_path, ResourceLoader.CACHE_MODE_REUSE) as Inventory
+	_check(inventory_a != null and inventory_a.get_item_count(Inventory.ItemTypes.COIN) == 3, "inventory data changed")
+	_check(inventory_a == inventory_b, "inventory resource cache behavior changed")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(inventory_path))
+	for path in [source, destination, backup]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _check(condition: bool, message: String) -> void:
