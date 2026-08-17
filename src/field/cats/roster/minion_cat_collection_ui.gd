@@ -3,19 +3,27 @@ extends CanvasLayer
 const SpeciesDatabase = preload("res://src/field/cats/roster/minion_cat_species_database.gd")
 const SpeciesCard = preload("res://src/field/cats/roster/minion_cat_species_card.gd")
 
+enum ViewMode { SPECIES_CATALOG, OWNED_CATS, CAT_DETAIL }
+
 var _is_open := false
 var _was_tree_paused := false
+var _view_mode := ViewMode.SPECIES_CATALOG
 var _selected_stage := 1
 var _selected_species_id := ""
 var _selected_id := ""
 var _refresh_left := 0.0
 
 @onready var overlay := $Overlay as Control
+@onready var back_button := %BackButton as Button
+@onready var breadcrumb_label := %BreadcrumbLabel as Label
 @onready var stage_tabs := %StageTabs as HBoxContainer
+@onready var species_area := $Overlay/Panel/Margin/MainVBox/Body/SpeciesArea as Control
 @onready var species_header := %SpeciesHeader as Label
 @onready var species_grid := %SpeciesGrid as GridContainer
+@onready var roster_area := $Overlay/Panel/Margin/MainVBox/Body/RosterArea as Control
 @onready var roster_title := %RosterTitle as Label
 @onready var grid := %CatGrid as GridContainer
+@onready var detail_panel := $Overlay/Panel/Margin/MainVBox/Body/DetailPanel as Control
 @onready var count_label := %CountLabel as Label
 @onready var species_label := %SpeciesLabel as Label
 @onready var economy_label := %EconomyLabel as Label
@@ -30,6 +38,7 @@ var _refresh_left := 0.0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	MinionCats.roster_changed.connect(_rebuild)
+	back_button.pressed.connect(_navigate_back)
 	for slot in [fishing_slot, raid_slot, battle_slot]:
 		slot.cat_dropped.connect(_on_cat_dropped)
 		slot.claim_requested.connect(_on_claim_requested)
@@ -45,7 +54,7 @@ func _process(delta: float) -> void:
 		return
 	_refresh_left = 1.0
 	var selected := MinionCats.get_by_id(_selected_id)
-	if selected:
+	if selected and _view_mode == ViewMode.CAT_DETAIL:
 		_show_detail(selected)
 	for child in grid.get_children():
 		if child is MinionCatCard:
@@ -66,8 +75,11 @@ func _input(event: InputEvent) -> void:
 		set_open(not _is_open)
 	elif _is_open and key_event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
-		set_open(false)
-	elif _is_open and key_event.keycode == KEY_ENTER:
+		if _view_mode == ViewMode.SPECIES_CATALOG:
+			set_open(false)
+		else:
+			_navigate_back()
+	elif _is_open and key_event.keycode == KEY_ENTER and _view_mode == ViewMode.CAT_DETAIL:
 		get_viewport().set_input_as_handled()
 		_toggle_selected_active()
 
@@ -79,6 +91,8 @@ func set_open(value: bool) -> void:
 	if _is_open:
 		_was_tree_paused = get_tree().paused
 		get_tree().paused = true
+		_view_mode = ViewMode.SPECIES_CATALOG
+		_selected_id = ""
 		_rebuild()
 		overlay.show()
 	else:
@@ -96,7 +110,26 @@ func _rebuild() -> void:
 	_ensure_selected_species()
 	_rebuild_stage_tabs()
 	_rebuild_species_cards()
-	_show_species(_selected_species_id)
+	_refresh_current_view()
+
+
+func _refresh_current_view() -> void:
+	match _view_mode:
+		ViewMode.OWNED_CATS:
+			if MinionCats.is_species_unlocked(_selected_species_id):
+				_open_species(_selected_species_id, false)
+			else:
+				_show_catalog_view()
+		ViewMode.CAT_DETAIL:
+			var selected := MinionCats.get_by_id(_selected_id)
+			if selected:
+				_show_detail(selected)
+			elif MinionCats.is_species_unlocked(_selected_species_id):
+				_open_species(_selected_species_id, false)
+			else:
+				_show_catalog_view()
+		_:
+			_show_catalog_view()
 
 
 func _ensure_selected_species() -> void:
@@ -130,6 +163,7 @@ func _select_stage(stage_id: int) -> void:
 	_selected_stage = stage_id
 	_selected_species_id = ""
 	_selected_id = ""
+	_view_mode = ViewMode.SPECIES_CATALOG
 	_rebuild()
 
 
@@ -146,40 +180,39 @@ func _rebuild_species_cards() -> void:
 			MinionCats.get_cats_by_species(species_id).size()
 		)
 		card.button_pressed = species_id == _selected_species_id
-		card.pressed.connect(_show_species.bind(species_id))
+		card.pressed.connect(_open_species.bind(species_id))
 		species_grid.add_child(card)
 
 
-func _show_species(species_id: String) -> void:
+func _open_species(species_id: String, navigate := true) -> void:
 	if species_id.is_empty():
 		return
 	_selected_species_id = species_id
 	for child in species_grid.get_children():
 		if child is Button:
 			child.button_pressed = String(child.get_meta("species_id", "")) == species_id
+	if not MinionCats.is_species_unlocked(species_id):
+		_show_result({
+			"ok": false,
+			"message": "아직 발견하지 못한 종입니다. 실제로 부하 영입해야 열립니다.",
+		})
+		_show_catalog_view()
+		return
+	if navigate:
+		_selected_id = ""
+	_view_mode = ViewMode.OWNED_CATS
 	_clear_children(grid)
 	var definition := MinionCats.get_species_definition(species_id)
-	if not MinionCats.is_species_unlocked(species_id):
-		_selected_id = ""
-		roster_title.text = "????? · 보유 개체"
-		empty_label.visible = true
-		empty_label.text = "아직 발견하지 못한 종입니다.\n해당 종을 부하로 영입하면 도감이 해금됩니다."
-		_show_locked_detail()
-		return
 	var cats := MinionCats.get_cats_by_species(species_id)
 	roster_title.text = "%s · 보유 %d마리" % [definition.get("name", species_id), cats.size()]
 	empty_label.visible = cats.is_empty()
 	empty_label.text = "해금되었지만 현재 보유한 개체가 없습니다."
 	if cats.is_empty():
 		_selected_id = ""
-		detail_label.text = "고양이 개체를 영입하면 상세 정보가 표시됩니다."
-		return
-	for cat in cats:
-		grid.add_child(_create_cat_card(cat))
-	var selected := MinionCats.get_by_id(_selected_id)
-	if selected == null or selected.species_id != species_id:
-		selected = cats[0]
-	_show_detail(selected)
+	else:
+		for cat in cats:
+			grid.add_child(_create_cat_card(cat))
+	_apply_view_visibility()
 
 
 func _create_cat_card(cat: MinionCatData) -> MinionCatCard:
@@ -190,18 +223,12 @@ func _create_cat_card(cat: MinionCatData) -> MinionCatCard:
 	return card
 
 
-func _show_locked_detail() -> void:
-	detail_label.text = (
-		"[ ????? ]\n\n아직 발견하지 못한 종입니다.\n\n"
-		+ "필드에서 보는 것만으로는 해금되지 않습니다.\n"
-		+ "적 고양이를 실제로 부하로 영입해야 합니다."
-	)
-
-
 func _show_detail(cat: MinionCatData) -> void:
 	if cat == null:
 		return
+	_selected_species_id = cat.species_id
 	_selected_id = cat.unique_id
+	_view_mode = ViewMode.CAT_DETAIL
 	var definition := MinionCats.get_species_definition(cat.species_id)
 	var detail_format := (
 		"[ %s ]\n\n종  %s\n역할  %s\n출신  STAGE %d\n"
@@ -232,6 +259,46 @@ func _show_detail(cat: MinionCatData) -> void:
 			child.button_pressed = String(child.get_meta("cat_id", "")) == cat.unique_id
 	var deployment_state := "출전 중" if MinionCats.is_active_minion(cat) else "대기"
 	detail_label.text += "\n\n필드 상태: %s\n[ENTER] 출전 지정 / 해제" % deployment_state
+	_apply_view_visibility()
+
+
+func _show_catalog_view() -> void:
+	_view_mode = ViewMode.SPECIES_CATALOG
+	_selected_id = ""
+	_apply_view_visibility()
+
+
+func _navigate_back() -> void:
+	match _view_mode:
+		ViewMode.CAT_DETAIL:
+			_open_species(_selected_species_id, false)
+		ViewMode.OWNED_CATS:
+			_show_catalog_view()
+		_:
+			return
+
+
+func _apply_view_visibility() -> void:
+	var showing_catalog := _view_mode == ViewMode.SPECIES_CATALOG
+	var showing_roster := _view_mode == ViewMode.OWNED_CATS
+	stage_tabs.visible = showing_catalog
+	species_area.visible = showing_catalog
+	roster_area.visible = showing_roster
+	detail_panel.visible = _view_mode == ViewMode.CAT_DETAIL
+	back_button.visible = not showing_catalog
+	var definition := MinionCats.get_species_definition(_selected_species_id)
+	var species_name := String(definition.get("name", _selected_species_id))
+	match _view_mode:
+		ViewMode.OWNED_CATS:
+			breadcrumb_label.text = "품종 도감  >  %s  >  보유 개체" % species_name
+		ViewMode.CAT_DETAIL:
+			var selected := MinionCats.get_by_id(_selected_id)
+			breadcrumb_label.text = "품종 도감  >  %s  >  %s  >  개체 상세" % [
+				species_name,
+				selected.display_name if selected else "고양이",
+			]
+		_:
+			breadcrumb_label.text = "품종 도감"
 
 
 func _toggle_selected_active() -> void:

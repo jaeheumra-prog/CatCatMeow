@@ -77,7 +77,7 @@ text = "보유 고양이  0"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
 theme_override_font_sizes/font_size = 22
-text = "   [ 1 / ESC 닫기 ]"
+text = "   [ 1 닫기 · ESC 뒤로/닫기 ]"
 
 [node name="StatusRow" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
 layout_mode = 2
@@ -98,6 +98,26 @@ theme_override_font_sizes/font_size = 22
 text = "참치캔 0   고등어 0   연어 0   명성 0"
 horizontal_alignment = 2
 
+[node name="NavigationRow" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BackButton" type="Button" parent="Overlay/Panel/Margin/MainVBox/NavigationRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "← 뒤로"
+
+[node name="BreadcrumbLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/NavigationRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.72, 0.79, 0.91, 1)
+theme_override_font_sizes/font_size = 20
+text = "품종 도감"
+vertical_alignment = 1
+
 [node name="StageTabs" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -109,7 +129,6 @@ size_flags_vertical = 3
 theme_override_constants/separation = 12
 
 [node name="SpeciesArea" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/Body"]
-custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
@@ -131,10 +150,9 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
-columns = 2
+columns = 5
 
 [node name="RosterArea" type="Control" parent="Overlay/Panel/Margin/MainVBox/Body"]
-custom_minimum_size = Vector2(570, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -164,7 +182,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 18
 theme_override_constants/v_separation = 18
-columns = 2
+columns = 5
 
 [node name="EmptyLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/Body/RosterArea"]
 unique_name_in_owner = true
@@ -182,7 +200,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="DetailPanel" type="PanelContainer" parent="Overlay/Panel/Margin/MainVBox/Body"]
-custom_minimum_size = Vector2(350, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 
