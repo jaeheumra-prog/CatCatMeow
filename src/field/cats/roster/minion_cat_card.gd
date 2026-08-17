@@ -1,6 +1,8 @@
 class_name MinionCatCard
 extends Button
 
+const SpeciesDatabase = preload("res://src/field/cats/roster/minion_cat_species_database.gd")
+
 var cat_data: MinionCatData
 
 var _portrait: TextureRect
@@ -28,7 +30,12 @@ func refresh() -> void:
 	_portrait.texture = _load_portrait(cat_data)
 	_portrait.modulate = cat_data.appearance_tint
 	_name_label.text = cat_data.display_name
-	_species_label.text = "%s · LV.%d · 호감도 %d" % [cat_data.species_id, cat_data.level, cat_data.affection]
+	_species_label.text = "%s · %s형 · LV.%d · 호감도 %d" % [
+		SpeciesDatabase.get_display_name(cat_data.species_id),
+		SpeciesDatabase.get_role_name(cat_data.role_id),
+		cat_data.level,
+		cat_data.affection,
+	]
 	_stats_label.text = "전투 %d  민첩 %d  체력 %d\n친화 %d  손재주 %d  HP %d/%d" % [
 		cat_data.combat_power, cat_data.agility, cat_data.stamina,
 		cat_data.friendliness, cat_data.dexterity, cat_data.current_health, cat_data.max_health]

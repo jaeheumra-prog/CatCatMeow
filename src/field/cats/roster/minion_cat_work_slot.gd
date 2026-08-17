@@ -64,7 +64,7 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 		return false
 	var cat := MinionCats.get_by_id(String(data.get("cat_id", "")))
 	return (cat != null and not cat.is_working() 
-	and not MinionCats.is_activate(cat)
+	and not MinionCats.is_active_minion(cat)
 )
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:

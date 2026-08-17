@@ -2,6 +2,7 @@ extends Node
 
 const TEST_SAVE := "user://minion_cat_work_system_test.tres"
 const ROSTER_SCRIPT := preload("res://src/field/cats/roster/minion_cat_roster.gd")
+const SPECIES_DATABASE := preload("res://src/field/cats/roster/minion_cat_species_database.gd")
 
 var _failed := false
 
@@ -19,8 +20,15 @@ func _run() -> void:
 	_check(roster.count() == 0, "new test roster was not empty")
 	_check(roster.add_debug_cat("fisher_cat").ok, "debug cat could not be added")
 	_check(roster.count() == 1, "cat count did not increase")
-	_check("fisher_cat" in roster.data.unlocked_species, "species was not unlocked")
+	_check("american_shorthair" in roster.data.unlocked_species, "legacy species was not migrated and unlocked")
 	var cat: MinionCatData = roster.get_by_number(1)
+	_check(cat.species_id == "american_shorthair", "legacy species id was not normalized")
+	_check(cat.role_id == "fisher", "legacy role id was not preserved")
+	_check(cat.stage_id == 1, "cat did not retain its species stage")
+	_check(roster.get_cats_by_species("american_shorthair").size() == 1, "species filtering lost the cat")
+	_check(roster.get_species_ids_for_stage(1).size() == 4, "main stage catalog size is wrong")
+	_check(SPECIES_DATABASE.SPECIES_ORDER.size() == 33, "catalog does not contain all 33 species")
+	_check(not roster.is_species_unlocked("maine_coon"), "unrecruited species was unlocked")
 	_check(roster.set_active_minion(1).ok, "cat could not be assigned for field deployment")
 	_check(roster.get_active_minion() == cat, "active minion selection was not stored")
 	_check(not roster.start_work(1, "FISHING", 1).ok, "deployed cat incorrectly started work")

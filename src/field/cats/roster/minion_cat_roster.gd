@@ -1,52 +1,19 @@
 extends Node
 
+const SpeciesDatabase = preload("res://src/field/cats/roster/minion_cat_species_database.gd")
+
 signal roster_changed
 signal cat_recruited(cat: MinionCatData)
 signal work_completed(cat: MinionCatData)
 
 const DEFAULT_SAVE_PATH := "user://minion_cat_roster.tres"
+const MIGRATION_BACKUP_PATH := "user://minion_cat_roster.pre_species_migration.tres"
 const DEFAULT_WORK_SECONDS := {
 	MinionCatData.WorkType.FISHING: 20 * 60,
 	MinionCatData.WorkType.RAID: 30 * 60,
 	MinionCatData.WorkType.BATTLE: 45 * 60,
 }
-const SPECIES: Dictionary = {
-	"basic_cat": {
-		"name": "마을고양이", "description": "어떤 일도 무난하게 수행하는 균형형 고양이",
-		"combat": 2, "agility": 2, "stamina": 2, "friendliness": 2, "dexterity": 2,
-		"health": 6,
-		"portrait": "res://assets/characters/bbiyong/bbiyong_lab_sheet.png",
-		"portrait_region": Rect2(0, 0, 320, 330),
-	},
-	"scout_cat": {
-		"name": "겁쟁이 고양이", "description": "민첩하고 친화력이 높은 정찰 특기 고양이",
-		"combat": 1, "agility": 4, "stamina": 2, "friendliness": 4, "dexterity": 2,
-		"health": 5,
-		"portrait": "res://assets/characters/bbiyong/bbiyong_lab_sheet.png",
-		"portrait_region": Rect2(320, 0, 320, 330),
-	},
-	"thief_cat": {
-		"name": "도둑 고양이", "description": "약탈과 아이템 발견에 뛰어난 고양이",
-		"combat": 2, "agility": 5, "stamina": 2, "friendliness": 1, "dexterity": 3,
-		"health": 6,
-		"portrait": "res://assets/characters/bbiyong/bbiyong_lab_sheet.png",
-		"portrait_region": Rect2(640, 0, 320, 330),
-	},
-	"fisher_cat": {
-		"name": "낚시 고양이", "description": "손재주가 좋아 희귀 생선을 잘 낚는 고양이",
-		"combat": 1, "agility": 2, "stamina": 4, "friendliness": 3, "dexterity": 5,
-		"health": 7,
-		"portrait": "res://assets/characters/bbiyong/bbiyong_lab_sheet.png",
-		"portrait_region": Rect2(960, 0, 320, 330),
-	},
-	"fighter_cat": {
-		"name": "싸움꾼 고양이", "description": "전투력과 체력이 높은 전투 특기 고양이",
-		"combat": 5, "agility": 2, "stamina": 4, "friendliness": 1, "dexterity": 1,
-		"health": 10,
-		"portrait": "res://assets/characters/bbiyong/bbiyong_lab_sheet.png",
-		"portrait_region": Rect2(0, 330, 320, 330),
-	},
-}
+const SPECIES: Dictionary = SpeciesDatabase.SPECIES
 
 var save_path := DEFAULT_SAVE_PATH
 var data: MinionCatRosterData
@@ -77,10 +44,15 @@ func _process(delta: float) -> void:
 func register_from_enemy(enemy: EnemyCat) -> MinionCatData:
 	if not is_instance_valid(enemy):
 		return null
-	var species_key := enemy.species_id if SPECIES.has(enemy.species_id) else "basic_cat"
+	var legacy_role := SpeciesDatabase.legacy_role_id(enemy.species_id)
+	var species_key := SpeciesDatabase.normalize_species_id(enemy.species_id)
+	if not SpeciesDatabase.has_species(species_key):
+		species_key = "korean_shorthair"
+	var definition := SpeciesDatabase.get_definition(species_key)
+	if not legacy_role.is_empty():
+		definition["role_id"] = legacy_role
 	var cat := MinionCatData.new()
-	cat.initialize_from_enemy(enemy, data.cats.size() + 1, SPECIES[species_key])
-	cat.species_id = species_key
+	cat.initialize_from_enemy(enemy, data.cats.size() + 1, definition)
 	data.cats.append(cat)
 	if data.active_minion_id.is_empty():
 		data.active_minion_id=cat.unique_id
@@ -91,12 +63,16 @@ func register_from_enemy(enemy: EnemyCat) -> MinionCatData:
 	return cat
 
 
-func add_debug_cat(species_key: String = "basic_cat") -> Dictionary:
-	species_key = species_key.to_lower()
-	if not SPECIES.has(species_key):
+func add_debug_cat(species_key: String = "korean_shorthair") -> Dictionary:
+	var legacy_role := SpeciesDatabase.legacy_role_id(species_key)
+	species_key = SpeciesDatabase.normalize_species_id(species_key)
+	if not SpeciesDatabase.has_species(species_key):
 		return _result(false, "없는 고양이 종입니다: %s" % species_key)
+	var definition := SpeciesDatabase.get_definition(species_key)
+	if not legacy_role.is_empty():
+		definition["role_id"] = legacy_role
 	var cat := MinionCatData.new()
-	cat.initialize_debug(species_key, data.cats.size() + 1, SPECIES[species_key])
+	cat.initialize_debug(species_key, data.cats.size() + 1, definition)
 	data.cats.append(cat)
 	unlock_species(species_key, false)
 	_save_and_emit()
@@ -106,6 +82,36 @@ func add_debug_cat(species_key: String = "basic_cat") -> Dictionary:
 
 func get_all() -> Array[MinionCatData]:
 	return data.cats.duplicate()
+
+
+func get_cats_by_species(species_id: String) -> Array[MinionCatData]:
+	var normalized := SpeciesDatabase.normalize_species_id(species_id)
+	var result: Array[MinionCatData] = []
+	for cat in data.cats:
+		if cat.species_id == normalized:
+			result.append(cat)
+	return result
+
+
+func get_species_definition(species_id: String) -> Dictionary:
+	return SpeciesDatabase.get_definition(species_id)
+
+
+func get_species_ids_for_stage(stage_id: int) -> Array[String]:
+	return SpeciesDatabase.get_species_ids_for_stage(stage_id)
+
+
+func is_species_unlocked(species_id: String) -> bool:
+	var normalized := SpeciesDatabase.normalize_species_id(species_id)
+	return normalized in data.unlocked_species
+
+
+func get_unlocked_count_for_stage(stage_id: int) -> int:
+	var result := 0
+	for species_id in get_species_ids_for_stage(stage_id):
+		if is_species_unlocked(species_id):
+			result += 1
+	return result
 
 
 func get_by_id(unique_id: String) -> MinionCatData:
@@ -199,15 +205,15 @@ func set_active_minion_by_id(unique_id: String) -> Dictionary:
 	)
 
 func unlock_species(species_key: String, notify := true) -> Dictionary:
-	species_key = species_key.to_lower()
-	if not SPECIES.has(species_key):
+	species_key = SpeciesDatabase.normalize_species_id(species_key)
+	if not SpeciesDatabase.has_species(species_key):
 		return _result(false, "없는 고양이 종입니다: %s" % species_key)
 	if species_key in data.unlocked_species:
 		return _result(true, "이미 해금된 종입니다: %s" % species_key)
 	data.unlocked_species.append(species_key)
 	if notify:
 		_save_and_emit()
-	return _result(true, "%s 종을 해금했습니다." % String(SPECIES[species_key].name))
+	return _result(true, "%s 종을 해금했습니다." % SpeciesDatabase.get_display_name(species_key))
 
 
 func unlock_work(work_name: String) -> Dictionary:
@@ -355,7 +361,7 @@ func bind_runtime_minion(minion: MinionCat) -> void:
 
 func get_roster_summary() -> String:
 	if data.cats.is_empty():
-		return "보유한 MinionCat이 없습니다. CATADD BASIC_CAT으로 시험할 수 있습니다."
+		return "보유한 MinionCat이 없습니다. CATADD KOREAN_SHORTHAIR로 시험할 수 있습니다."
 	var lines: Array[String] = ["보유 고양이 %d마리" % data.cats.size()]
 	for index in data.cats.size():
 		var cat := data.cats[index]
@@ -381,11 +387,11 @@ func get_cat_summary(number: int) -> String:
 
 func get_codex_summary() -> String:
 	var lines: Array[String] = ["고양이 종 도감 %d/%d" % [data.unlocked_species.size(), SPECIES.size()]]
-	for key in SPECIES:
-		var species: Dictionary = SPECIES[key]
+	for key in SpeciesDatabase.SPECIES_ORDER:
+		var species := SpeciesDatabase.get_definition(key)
 		var unlocked: bool = key in data.unlocked_species
 		var owned := _count_species(key)
-		lines.append("%s %s | %s | 보유 %d" % ["[해금]" if unlocked else "[잠김]", key, String(species.name) if unlocked else "???", owned])
+		lines.append("%s %s | %s | 보유 %d" % ["[해금]" if unlocked else "[잠김]", key, String(species.name) if unlocked else "?????", owned])
 	return "\n".join(lines)
 
 
@@ -491,27 +497,54 @@ func _restore() -> void:
 		var loaded := ResourceLoader.load(save_path, "", ResourceLoader.CACHE_MODE_IGNORE) as MinionCatRosterData
 		if loaded:
 			data = loaded
+			_create_migration_backup()
 			_migrate_data()
+			_save()
 			return
+		push_error("MinionCatRoster 저장 파일을 읽지 못해 덮어쓰지 않고 빈 데이터로 실행합니다: %s" % save_path)
+		data = MinionCatRosterData.new()
+		_migrate_data()
+		return
 	data = MinionCatRosterData.new()
 	_migrate_data()
 	_save()
 
 
+func _create_migration_backup() -> void:
+	if save_path != DEFAULT_SAVE_PATH or FileAccess.file_exists(MIGRATION_BACKUP_PATH):
+		return
+	var source := ProjectSettings.globalize_path(save_path)
+	var destination := ProjectSettings.globalize_path(MIGRATION_BACKUP_PATH)
+	var error := DirAccess.copy_absolute(source, destination)
+	if error != OK:
+		push_warning("MinionCatRoster 마이그레이션 백업 생성 실패: %d" % error)
+
+
 func _migrate_data() -> void:
-	if "basic_cat" not in data.unlocked_species:
-		data.unlocked_species.append("basic_cat")
 	if "FISHING" not in data.unlocked_work:
 		data.unlocked_work.append("FISHING")
 	for item in ["catnip", "training_treat", "bond_badge"]:
 		if not data.items.has(item):
 			data.items[item] = 0
+	var recruited_species := PackedStringArray()
 	for cat in data.cats:
 		cat.ensure_appearance()
-		if not SPECIES.has(cat.species_id):
-			cat.species_id = "basic_cat"
+		var old_species_id := cat.species_id
+		var species_id := SpeciesDatabase.normalize_species_id(old_species_id)
+		if not SpeciesDatabase.has_species(species_id):
+			species_id = "korean_shorthair"
+		var definition := SpeciesDatabase.get_definition(species_id)
+		var legacy_role := SpeciesDatabase.legacy_role_id(old_species_id)
+		cat.species_id = species_id
+		cat.role_id = legacy_role if not legacy_role.is_empty() else String(definition.get("role_id", "balanced"))
+		cat.stage_id = int(definition.get("stage", 1))
+		cat.portrait_path = String(definition.get("portrait", cat.portrait_path))
+		cat.portrait_region = definition.get("portrait_region", cat.portrait_region)
+		if species_id not in recruited_species:
+			recruited_species.append(species_id)
 		if cat.is_work_complete():
 			cat.work_ready = true
+	data.unlocked_species = recruited_species
 
 
 func _save_and_emit() -> void:

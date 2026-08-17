@@ -5,7 +5,7 @@ extends Resource
 
 @export var active_minion_id :="" #현재 출전 냥이
 
-@export var unlocked_species: PackedStringArray = ["basic_cat"]
+@export var unlocked_species: PackedStringArray = []
 @export var unlocked_work: PackedStringArray = ["FISHING"]
 
 @export var tuna_cans := 0 #참치캔

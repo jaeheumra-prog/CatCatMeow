@@ -105,7 +105,7 @@ func _on_command_submitted(raw_command: String) -> void:
 		"CATSTATUS":
 			_write_system_message(MinionCats.get_cat_summary(_int_arg(args, 0)))
 		"CATADD":
-			_write_result(MinionCats.add_debug_cat(_string_arg(args, 0, "basic_cat")))
+			_write_result(MinionCats.add_debug_cat(_string_arg(args, 0, "korean_shorthair")))
 		"CATUNLOCK":
 			_write_result(MinionCats.unlock_species(_string_arg(args, 0)))
 		"CATWORKUNLOCK":
@@ -200,7 +200,8 @@ func _cat_help_text() -> String:
 		+ "CATCLAIM <번호|ALL>             완료 보상 수령\n"
 		+ "CATGIFT <번호> CATNIP           호감도 상승\n"
 		+ "CATTRAIN <번호> <스탯>          훈련간식으로 스탯 상승\n"
-		+ "개발 시험: CATADD <종>, CATUNLOCK <종>, CATWORKUNLOCK <작업>, CATGIVEITEM <아이템> [수량]"
+		+ "개발 시험: CATADD <종>, CATUNLOCK <종>, CATWORKUNLOCK <작업>, CATGIVEITEM <아이템> [수량]\n"
+		+ "예: CATADD KOREAN_SHORTHAIR · CATADD MAINE_COON · CATADD BENGAL"
 	)
 
 

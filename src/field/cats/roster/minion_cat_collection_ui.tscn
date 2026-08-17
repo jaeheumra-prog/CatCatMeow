@@ -65,7 +65,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 38
-text = "MINION CAT COLLECTION"
+text = "고양이 도감"
 
 [node name="CountLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/Header"]
 unique_name_in_owner = true
@@ -98,20 +98,63 @@ theme_override_font_sizes/font_size = 22
 text = "참치캔 0   고등어 0   연어 0   명성 0"
 horizontal_alignment = 2
 
-[node name="Body" type="HSplitContainer" parent="Overlay/Panel/Margin/MainVBox"]
+[node name="StageTabs" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Body" type="HBoxContainer" parent="Overlay/Panel/Margin/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 3
-split_offset = 1180
+theme_override_constants/separation = 12
+
+[node name="SpeciesArea" type="VBoxContainer" parent="Overlay/Panel/Margin/MainVBox/Body"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SpeciesHeader" type="Label" parent="Overlay/Panel/Margin/MainVBox/Body/SpeciesArea"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.57, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "MAIN · 고양이 모양 섬"
+
+[node name="SpeciesScroll" type="ScrollContainer" parent="Overlay/Panel/Margin/MainVBox/Body/SpeciesArea"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SpeciesGrid" type="GridContainer" parent="Overlay/Panel/Margin/MainVBox/Body/SpeciesArea/SpeciesScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
 
 [node name="RosterArea" type="Control" parent="Overlay/Panel/Margin/MainVBox/Body"]
-custom_minimum_size = Vector2(1120, 0)
+custom_minimum_size = Vector2(570, 0)
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RosterTitle" type="Label" parent="Overlay/Panel/Margin/MainVBox/Body/RosterArea"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 34.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.83, 0.87, 0.95, 1)
+theme_override_font_sizes/font_size = 22
+text = "보유 개체"
 
 [node name="Scroll" type="ScrollContainer" parent="Overlay/Panel/Margin/MainVBox/Body/RosterArea"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 40.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -121,7 +164,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 18
 theme_override_constants/v_separation = 18
-columns = 4
+columns = 2
 
 [node name="EmptyLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/Body/RosterArea"]
 unique_name_in_owner = true
@@ -129,6 +172,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 40.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.66, 0.7, 0.8, 1)
@@ -138,8 +182,9 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="DetailPanel" type="PanelContainer" parent="Overlay/Panel/Margin/MainVBox/Body"]
-custom_minimum_size = Vector2(390, 0)
+custom_minimum_size = Vector2(350, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="DetailLabel" type="Label" parent="Overlay/Panel/Margin/MainVBox/Body/DetailPanel"]
 unique_name_in_owner = true

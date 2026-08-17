@@ -1,11 +1,20 @@
 extends CanvasLayer
 
+const SpeciesDatabase = preload("res://src/field/cats/roster/minion_cat_species_database.gd")
+const SpeciesCard = preload("res://src/field/cats/roster/minion_cat_species_card.gd")
+
 var _is_open := false
 var _was_tree_paused := false
+var _selected_stage := 1
+var _selected_species_id := ""
 var _selected_id := ""
 var _refresh_left := 0.0
 
 @onready var overlay := $Overlay as Control
+@onready var stage_tabs := %StageTabs as HBoxContainer
+@onready var species_header := %SpeciesHeader as Label
+@onready var species_grid := %SpeciesGrid as GridContainer
+@onready var roster_title := %RosterTitle as Label
 @onready var grid := %CatGrid as GridContainer
 @onready var count_label := %CountLabel as Label
 @onready var species_label := %SpeciesLabel as Label
@@ -46,9 +55,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if DeveloperConsole.visible:
-		return
-	if not event is InputEventKey:
+	if DeveloperConsole.visible or not event is InputEventKey:
 		return
 	var key_event := event as InputEventKey
 	if not key_event.pressed or key_event.echo:
@@ -60,31 +67,9 @@ func _input(event: InputEvent) -> void:
 	elif _is_open and key_event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
 		set_open(false)
-		
 	elif _is_open and key_event.keycode == KEY_ENTER:
 		get_viewport().set_input_as_handled()
 		_toggle_selected_active()
-		
-func _toggle_selected_active() -> void:
-	if _selected_id.is_empty():
-		_show_result({
-			"ok":false,
-			"message": "선택"
-		})
-		return
-		
-	var result := MinionCats.set_active_minion_by_id(
-		_selected_id
-	)
-	
-	_show_result(result)
-	
-	var selected := MinionCats.get_by_id(
-		_selected_id
-	)
-	
-	if selected:
-		_show_detail(selected)
 
 
 func set_open(value: bool) -> void:
@@ -104,22 +89,97 @@ func set_open(value: bool) -> void:
 func _rebuild() -> void:
 	if not is_node_ready():
 		return
-	for child in grid.get_children():
-		grid.remove_child(child)
-		child.queue_free()
 	var cats: Array[MinionCatData] = MinionCats.get_all()
 	count_label.text = "보유 고양이  %d" % cats.size()
 	_update_status_labels()
-	empty_label.visible = cats.is_empty()
 	_refresh_work_slots(cats)
+	_ensure_selected_species()
+	_rebuild_stage_tabs()
+	_rebuild_species_cards()
+	_show_species(_selected_species_id)
+
+
+func _ensure_selected_species() -> void:
+	var stage_species := MinionCats.get_species_ids_for_stage(_selected_stage)
+	if _selected_species_id not in stage_species:
+		_selected_species_id = stage_species[0] if not stage_species.is_empty() else ""
+
+
+func _rebuild_stage_tabs() -> void:
+	_clear_children(stage_tabs)
+	for stage_id in range(1, 9):
+		var definition := SpeciesDatabase.get_stage_definition(stage_id)
+		var species_ids := MinionCats.get_species_ids_for_stage(stage_id)
+		var button := Button.new()
+		button.toggle_mode = true
+		button.button_pressed = stage_id == _selected_stage
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size = Vector2(0, 58)
+		button.add_theme_font_size_override("font_size", 17)
+		button.text = "%s  %d/%d" % [
+			String(definition.get("label", stage_id)),
+			MinionCats.get_unlocked_count_for_stage(stage_id),
+			species_ids.size(),
+		]
+		button.tooltip_text = String(definition.get("region", ""))
+		button.pressed.connect(_select_stage.bind(stage_id))
+		stage_tabs.add_child(button)
+
+
+func _select_stage(stage_id: int) -> void:
+	_selected_stage = stage_id
+	_selected_species_id = ""
+	_selected_id = ""
+	_rebuild()
+
+
+func _rebuild_species_cards() -> void:
+	_clear_children(species_grid)
+	var stage := SpeciesDatabase.get_stage_definition(_selected_stage)
+	species_header.text = "%s · %s" % [stage.get("label", ""), stage.get("region", "")]
+	for species_id in MinionCats.get_species_ids_for_stage(_selected_stage):
+		var definition := MinionCats.get_species_definition(species_id)
+		var card := SpeciesCard.new()
+		card.setup(
+			definition,
+			MinionCats.is_species_unlocked(species_id),
+			MinionCats.get_cats_by_species(species_id).size()
+		)
+		card.button_pressed = species_id == _selected_species_id
+		card.pressed.connect(_show_species.bind(species_id))
+		species_grid.add_child(card)
+
+
+func _show_species(species_id: String) -> void:
+	if species_id.is_empty():
+		return
+	_selected_species_id = species_id
+	for child in species_grid.get_children():
+		if child is Button:
+			child.button_pressed = String(child.get_meta("species_id", "")) == species_id
+	_clear_children(grid)
+	var definition := MinionCats.get_species_definition(species_id)
+	if not MinionCats.is_species_unlocked(species_id):
+		_selected_id = ""
+		roster_title.text = "????? · 보유 개체"
+		empty_label.visible = true
+		empty_label.text = "아직 발견하지 못한 종입니다.\n해당 종을 부하로 영입하면 도감이 해금됩니다."
+		_show_locked_detail()
+		return
+	var cats := MinionCats.get_cats_by_species(species_id)
+	roster_title.text = "%s · 보유 %d마리" % [definition.get("name", species_id), cats.size()]
+	empty_label.visible = cats.is_empty()
+	empty_label.text = "해금되었지만 현재 보유한 개체가 없습니다."
 	if cats.is_empty():
 		_selected_id = ""
-		detail_label.text = "아직 영입한 고양이가 없습니다.\n적 고양이를 영입하면 이곳에 개체별로 저장됩니다."
+		detail_label.text = "고양이 개체를 영입하면 상세 정보가 표시됩니다."
 		return
 	for cat in cats:
 		grid.add_child(_create_cat_card(cat))
 	var selected := MinionCats.get_by_id(_selected_id)
-	_show_detail(selected if selected else cats[0])
+	if selected == null or selected.species_id != species_id:
+		selected = cats[0]
+	_show_detail(selected)
 
 
 func _create_cat_card(cat: MinionCatData) -> MinionCatCard:
@@ -130,44 +190,72 @@ func _create_cat_card(cat: MinionCatData) -> MinionCatCard:
 	return card
 
 
+func _show_locked_detail() -> void:
+	detail_label.text = (
+		"[ ????? ]\n\n아직 발견하지 못한 종입니다.\n\n"
+		+ "필드에서 보는 것만으로는 해금되지 않습니다.\n"
+		+ "적 고양이를 실제로 부하로 영입해야 합니다."
+	)
+
+
 func _show_detail(cat: MinionCatData) -> void:
 	if cat == null:
 		return
 	_selected_id = cat.unique_id
+	var definition := MinionCats.get_species_definition(cat.species_id)
 	var detail_format := (
-		"[ %s ]\n\n종류  %s\n레벨  %d   EXP %d/%d\n체력  %d / %d\n호감도  %d / 100\n\n"
+		"[ %s ]\n\n종  %s\n역할  %s\n출신  STAGE %d\n"
+		+ "레벨  %d   EXP %d/%d\n체력  %d / %d\n호감도  %d / 100\n\n"
 		+ "전투력  %d\n민첩  %d\n체력  %d\n친화력  %d\n손재주  %d\n\n작업  %s\n\n개체 ID\n%s"
 	)
 	detail_label.text = detail_format % [
-		cat.display_name, cat.species_id, cat.level, cat.experience, cat.level * 30,
-		cat.current_health, cat.max_health, cat.affection, cat.combat_power, cat.agility,
-		cat.stamina, cat.friendliness, cat.dexterity, _work_state(cat), cat.unique_id]
+		cat.display_name,
+		definition.get("name", cat.species_id),
+		SpeciesDatabase.get_role_name(cat.role_id),
+		cat.stage_id,
+		cat.level,
+		cat.experience,
+		cat.level * 30,
+		cat.current_health,
+		cat.max_health,
+		cat.affection,
+		cat.combat_power,
+		cat.agility,
+		cat.stamina,
+		cat.friendliness,
+		cat.dexterity,
+		_work_state(cat),
+		cat.unique_id,
+	]
 	for child in grid.get_children():
 		if child is Button:
 			child.button_pressed = String(child.get_meta("cat_id", "")) == cat.unique_id
-			
-	var deployment_state := (
-		"출전 중"
-		if MinionCats.is_active_minion(cat)
-		else "대기"
-	)
-	
-	
-	detail_label.text += (
-		"\n\n필드 상태: %s"
-		%deployment_state
-	)
-	
-	detail_label.text += (
-		"\n [ENTER] 출전 지정 / 해제 "
-	)
+	var deployment_state := "출전 중" if MinionCats.is_active_minion(cat) else "대기"
+	detail_label.text += "\n\n필드 상태: %s\n[ENTER] 출전 지정 / 해제" % deployment_state
+
+
+func _toggle_selected_active() -> void:
+	if _selected_id.is_empty():
+		_show_result({"ok": false, "message": "출전시킬 고양이 개체를 먼저 선택하세요."})
+		return
+	var result := MinionCats.set_active_minion_by_id(_selected_id)
+	_show_result(result)
+	var selected := MinionCats.get_by_id(_selected_id)
+	if selected:
+		_show_detail(selected)
 
 
 func _update_status_labels() -> void:
-	species_label.text = "도감  %d / %d" % [MinionCats.data.unlocked_species.size(), MinionCats.SPECIES.size()]
+	species_label.text = "도감  %d / %d" % [
+		MinionCats.data.unlocked_species.size(),
+		SpeciesDatabase.SPECIES_ORDER.size(),
+	]
 	economy_label.text = "참치캔 %d   고등어 %d   연어 %d   명성 %d" % [
-		MinionCats.data.tuna_cans, MinionCats.data.mackerels,
-		MinionCats.data.salmons, MinionCats.data.reputation]
+		MinionCats.data.tuna_cans,
+		MinionCats.data.mackerels,
+		MinionCats.data.salmons,
+		MinionCats.data.reputation,
+	]
 
 
 func _refresh_work_slots(cats: Array[MinionCatData]) -> void:
@@ -178,7 +266,7 @@ func _refresh_work_slots(cats: Array[MinionCatData]) -> void:
 
 func _on_cat_dropped(cat_id: String, work_type: MinionCatData.WorkType) -> void:
 	var number := MinionCats.get_number_by_id(cat_id)
-	var work_key: String = String(MinionCatData.WorkType.keys()[work_type])
+	var work_key := String(MinionCatData.WorkType.keys()[work_type])
 	_show_result(MinionCats.start_work(number, work_key))
 
 
@@ -189,7 +277,9 @@ func _on_claim_requested(work_type: MinionCatData.WorkType) -> void:
 func _show_result(result: Dictionary) -> void:
 	feedback_label.text = String(result.get("message", ""))
 	feedback_label.add_theme_color_override(
-		"font_color", Color("8fe3a3") if bool(result.get("ok", false)) else Color("f07b88"))
+		"font_color",
+		Color("8fe3a3") if bool(result.get("ok", false)) else Color("f07b88")
+	)
 
 
 func _work_state(cat: MinionCatData) -> String:
@@ -204,3 +294,9 @@ func _format_seconds(seconds: int) -> String:
 	if seconds < 60:
 		return "%d초 남음" % seconds
 	return "%d분 %02d초 남음" % [seconds / 60, seconds % 60]
+
+
+func _clear_children(parent: Node) -> void:
+	for child in parent.get_children():
+		parent.remove_child(child)
+		child.queue_free()

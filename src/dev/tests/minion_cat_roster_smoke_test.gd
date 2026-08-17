@@ -15,6 +15,11 @@ func _run() -> void:
 	var overlay := MinionCatCollectionUI.get_node("Overlay") as Control
 	_check(overlay.visible, "1 key did not open the collection")
 	_check(get_tree().paused, "collection did not pause gameplay")
+	_check(MinionCatCollectionUI.get_node("%StageTabs").get_child_count() == 8, "catalog stage tabs were not built")
+	_check(MinionCatCollectionUI.get_node("%SpeciesGrid").get_child_count() == 4, "main stage species cards were not built")
+	MinionCatCollectionUI._select_stage(4)
+	await get_tree().process_frame
+	_check(MinionCatCollectionUI.get_node("%SpeciesGrid").get_child_count() == 5, "stage 4 species cards were not built")
 	_send_roster_key()
 	await get_tree().process_frame
 	_check(not overlay.visible, "second 1 key did not close the collection")

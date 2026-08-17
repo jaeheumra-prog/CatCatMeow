@@ -10,7 +10,9 @@ const APPEARANCE_TINTS := [
 ## 필드 노드가 사라져도 남아 있는 동료 고양이 한 마리의 영구 데이터입니다.
 @export var unique_id := ""
 @export var display_name := "동료고양이"
-@export var species_id := "basic_cat"
+@export var species_id := "korean_shorthair"
+@export var role_id := "balanced"
+@export var stage_id := 1
 @export var level := 1
 @export var current_health := 6
 @export var max_health := 6
@@ -70,6 +72,9 @@ func initialize_debug(species_key: String, roster_number: int, species: Dictiona
 func _apply_species_stats(species: Dictionary) -> void:
 	if species.is_empty():
 		return
+	species_id = String(species.get("id", species_id))
+	role_id = String(species.get("role_id", role_id))
+	stage_id = int(species.get("stage", stage_id))
 	combat_power = int(species.get("combat", combat_power))
 	agility = int(species.get("agility", agility))
 	stamina = int(species.get("stamina", stamina))
